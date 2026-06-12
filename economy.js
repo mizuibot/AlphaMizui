@@ -20,15 +20,18 @@ function _loadFromFile() {
 }
 
 function loadDB() {
-  if (!global.dbCache) {
-    global.dbCache = _loadFromFile();
-  }
-  return global.dbCache;
+  function loadDB() {
+  return _loadFromFile();
 }
+
 
 function saveDB(db) {
   global.dbCache = db;
+
   fs.writeFileSync(FILE, JSON.stringify(db, null, 2));
+
+  // 🔥 força reload do cache
+  global.dbCache = JSON.parse(JSON.stringify(db));
 }
 
 // =========================
