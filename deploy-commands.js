@@ -7,47 +7,89 @@ console.log("DEPLOY EM:", __dirname);
 
 const commands = [];
 
-const commandFiles = fs
-  .readdirSync(path.join(__dirname, "commands"))
-  .filter((file) => file.endsWith(".js"));
+// 🔥 loader recursivo seguro
+function loadCommands(dir) {
+  const files = fs.readdirSync(dir);
 
-for (const file of commandFiles) {
-  const filePath = path.join(__dirname, "commands", file);
+  for (const file of files) {
+    const fullPath = path.join(dir, file);
 
-  delete require.cache[require.resolve(filePath)];
+    // 🚫 IGNORA PREFIX SYSTEM
+    if (fullPath.includes("prefixmizui")) {
+      console.log("⛔ IGNORANDO PREFIX:", file);
+      continue;
+    }
 
-  let command;
+    let stat;
+    try {
+      stat = fs.lstatSync(fullPath);
+    } catch {
+      continue;
+    }
 
-  try {
-    command = require(filePath);
-  } catch (err) {
-    console.log("💥 ERRO NO REQUIRE:", file);
-    console.log(err);
-    continue;
-  }
+    // 📁 pasta → recursivo
+    if (stat.isDirectory()) {
+      loadCommands(fullPath);
+      continue;
+    }
 
-  console.log("📦 FILE:", file);
-  console.log("📦 COMMAND KEYS:", Object.keys(command || {}));
+    // só js
+    if (!file.endsWith(".js")) continue;
 
-  if (!command?.data) {
-    console.log("❌ SEM DATA:", file);
-    continue;
-  }
+    // limpa cache
+    try {
+      delete require.cache[require.resolve(fullPath)];
+    } catch {}
 
-  if (typeof command.data.toJSON !== "function") {
-    console.log("❌ DATA INVÁLIDA:", file);
-    continue;
-  }
+    let command;
 
-  try {
-    commands.push(command.data.toJSON());
-  } catch (err) {
-    console.log("💥 ERRO AO CONVERTER TOJSON:", file);
-    console.log(err);
+    try {
+      command = require(fullPath);
+    } catch (err) {
+      console.log("💥 ERRO NO REQUIRE:", file);
+      console.log(err.message);
+      continue;
+    }
+
+    console.log("📦 FILE:", file);
+
+    // ❌ validações seguras
+    if (!command) {
+      console.log("❌ COMANDO VAZIO:", file);
+      continue;
+    }
+
+    if (!command.data) {
+      console.log("❌ SEM DATA:", file);
+      continue;
+    }
+
+    if (!command.data.toJSON) {
+      console.log("❌ DATA SEM TOJSON:", file);
+      continue;
+    }
+
+    if (!command.data.name) {
+      console.log("❌ SEM NAME:", file);
+      continue;
+    }
+
+    try {
+      commands.push(command.data.toJSON());
+      console.log("✅ OK:", command.data.name);
+    } catch (err) {
+      console.log("💥 ERRO TOJSON:", file);
+      console.log(err.message);
+    }
   }
 }
 
-const rest = new REST({ version: "10" }).setToken(process.env.DISCORD_TOKEN);
+// 🔥 inicia na pasta commands
+loadCommands(path.join(__dirname, "commands"));
+
+const rest = new REST({ version: "10" }).setToken(
+  process.env.DISCORD_TOKEN
+);
 
 (async () => {
   try {

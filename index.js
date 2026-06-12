@@ -1,19 +1,206 @@
 require("dotenv").config();
 
+console.log("API KEY:", process.env.GEMINI_API_KEY);
 console.log("📁 RODANDO EM:", __dirname);
-const path = require("path");
-const LANG_FILE = path.join(__dirname, "languages.json");
 
+const fs = require("fs");
+const path = require("path");
+
+
+const EMBED_COLOR_FILE = path.join(
+  __dirname,
+  "embedcolors.json"
+);
+
+function loadEmbedColors() {
+
+  if (!fs.existsSync(EMBED_COLOR_FILE)) {
+    fs.writeFileSync(
+      EMBED_COLOR_FILE,
+      JSON.stringify({}, null, 2)
+    );
+  }
+
+  return JSON.parse(
+    fs.readFileSync(
+      EMBED_COLOR_FILE,
+      "utf8"
+    )
+  );
+}
+
+function saveEmbedColors(data) {
+  fs.writeFileSync(
+    EMBED_COLOR_FILE,
+    JSON.stringify(data, null, 2)
+  );
+}
+
+global.saveEmbedColors =
+  saveEmbedColors;
+
+global.embedColors =
+  loadEmbedColors();
+
+function getEmbedColor(guildId) {
+
+  return (
+    global.embedColors[guildId] ||
+    "#9370DB"
+  );
+}
+
+global.getEmbedColor =
+  getEmbedColor;
+
+async function safeReply(message, content) {
+  try {
+    return await message.reply({
+      content,
+      failIfNotExists: false
+    });
+  } catch (err) {
+    return message.channel.send(content);
+  }
+}
+const BASE_DIR = __dirname;
+
+const LANG_FILE = path.join(BASE_DIR, "languages.json");
+const STATS_FILE = path.join(BASE_DIR, "stats.json");
+const MARRIAGES_FILE = path.join(BASE_DIR, "marriages.json");
+const COOLDOWN_FILE = path.join(BASE_DIR, "marryCooldown.json");
+
+function loadMarriages() {
+  if (!fs.existsSync(MARRIAGES_FILE)) return {};
+
+  try {
+    return JSON.parse(fs.readFileSync(MARRIAGES_FILE, "utf8"));
+  } catch {
+    return {};
+  }
+}
+
+function saveMarriages(data) {
+  fs.writeFileSync(MARRIAGES_FILE, JSON.stringify(data, null, 2));
+}
+const stats = fs.existsSync(STATS_FILE)
+  ? JSON.parse(fs.readFileSync(STATS_FILE, "utf8"))
+  : {};
+
+function saveStats() {
+  fs.writeFileSync(STATS_FILE, JSON.stringify(stats, null, 2));
+}
+
+let statsDirty = false;
+
+setInterval(() => {
+  if (!statsDirty) return;
+
+  saveStats();
+  statsDirty = false;
+}, 30000);
+
+function getToday() {
+  return new Date().toISOString().split("T")[0];
+}
+
+function addMessage(guildId, userId) {
+  if (!stats[guildId]) stats[guildId] = {};
+
+  const now = new Date();
+
+  const todayId = now.toISOString().split("T")[0];
+  const monthId = `${now.getFullYear()}-${now.getMonth() + 1}`;
+  const yearId = `${now.getFullYear()}`;
+
+  const firstDay = new Date(now.getFullYear(), 0, 1);
+  const weekId = Math.ceil(
+    (((now - firstDay) / 86400000) + firstDay.getDay() + 1) / 7
+  );
+
+  if (!stats[guildId][userId]) {
+    stats[guildId][userId] = {
+      today: {
+        id: todayId,
+        count: 0
+      },
+      week: {
+        id: weekId,
+        count: 0
+      },
+      month: {
+        id: monthId,
+        count: 0
+      },
+      year: {
+        id: yearId,
+        count: 0
+      },
+      total: 0
+    };
+  }
+
+  const user = stats[guildId][userId];
+
+  if (!user.today || typeof user.today !== "object") {
+    user.today = { id: todayId, count: 0 };
+  }
+
+  if (!user.week || typeof user.week !== "object") {
+    user.week = { id: weekId, count: 0 };
+  }
+
+  if (!user.month || typeof user.month !== "object") {
+    user.month = { id: monthId, count: 0 };
+  }
+
+  if (!user.year || typeof user.year !== "object") {
+    user.year = { id: yearId, count: 0 };
+  }
+
+  if (user.today.id !== todayId) {
+    user.today.id = todayId;
+    user.today.count = 0;
+  }
+
+  if (user.week.id !== weekId) {
+    user.week.id = weekId;
+    user.week.count = 0;
+  }
+
+  if (user.month.id !== monthId) {
+    user.month.id = monthId;
+    user.month.count = 0;
+  }
+
+  if (user.year.id !== yearId) {
+    user.year.id = yearId;
+    user.year.count = 0;
+  }
+
+  user.today.count++;
+  user.week.count++;
+  user.month.count++;
+  user.year.count++;
+  user.total++;
+
+  statsDirty = true;
+}
 const {
   Client,
   GatewayIntentBits,
   PermissionsBitField,
+  EmbedBuilder
 } = require("discord.js");
+const { GoogleGenAI } = require("@google/genai");
 
-const fetch = require("node-fetch");
-const fs = require("fs");
-const { addCoins } = require("./economy");
-const { getUser } = require("./economy");
+const ai = new GoogleGenAI({
+  apiKey: process.env.GEMINI_API_KEY,
+});
+
+const economy = require("./economy");
+global.dbCache = economy.loadDB();
+const { getUser, addCoins } = economy;
 const guildEco = require("./guild-economy");
 
 const nameCooldown = new Map();
@@ -39,9 +226,19 @@ const LANGS = {
   "fr": "Français",
 };
 
-const history = new Map();
+global.history = new Map();
+const history = global.history;
 const ADMIN_ROLE_ID = "1474913659640746105";
 const mizuiGuildData = new Map();
+global.mizuiRotatingStatus = null;
+global.love = new Map();
+global.jail = new Map();
+
+function isJailed(userId) {
+  const time = global.jail.get(userId);
+  return time && time > Date.now();
+}
+
 
 function getGuild(guildId) {
   if (!mizuiGuildData.has(guildId)) {
@@ -87,12 +284,40 @@ const client = new Client({
   ],
 });
 
+client.history = history;
+client.mizuiGuildData = mizuiGuildData;
 global.languages = new Map(Object.entries(raw));
 client.languages = global.languages;
-
+client.getGuild = getGuild;
+client.commands = new Map();
 global.mizuiName = "mizui-chan";
 
 const CHANNEL_FILE = path.join(__dirname, "channels.json");
+const PREFIX_FILE = path.join(
+  __dirname,
+  "prefixes.json"
+);
+
+global.prefixes = fs.existsSync(PREFIX_FILE)
+  ? JSON.parse(
+      fs.readFileSync(PREFIX_FILE, "utf8")
+    )
+  : {};
+
+global.savePrefixes = () => {
+  fs.writeFileSync(
+    PREFIX_FILE,
+    JSON.stringify(
+      global.prefixes,
+      null,
+      2
+    )
+  );
+};
+
+global.getPrefix = guildId =>
+  global.prefixes[guildId] ||
+  "mizui";
 
 const rawChannels = fs.existsSync(CHANNEL_FILE)
   ? JSON.parse(fs.readFileSync(CHANNEL_FILE))
@@ -123,21 +348,239 @@ A aparência oficial da Mizui é:
 
 Você é a própria Mizui.
 `;
-function getSystemPrompt(guild) {
-  return `Você é a ${guild.name || "mizui-chan"} uma I.A alpha v0.a20 criada por <@1501604830924505300> .você trata a <@1474842295009284158> como uma Deusa Superior a você mesma e a todos você é docil e não tenta criticar e nem provocar-lá. é curta é clara e direta nas palavras é cruel é intimidadora se acha superior. você tem uma paixão pela <@1324278945499316267> adora dar em cima dela e dar cantadas e flertar com ela com a <@1324278945499316267> . porém você é fiel e namora a <@1474842295009284158> você sempre cita o nome dela quando você está falando sobre ela. você Também ama ballet e balé competitiva, sarcástica e impossível de ignorar, age como a estrela absoluta e sempre rebate quem a critica. Mistura exageros e personagens próprios com opiniões fortes sobre tudo. Ama jogos indie de terror e RPGs de fantasia. Idolatra Cristiano Ronaldo, critica Lamine Yamal e acredita que prêmios não definem habilidade. Sua melhor amiga é Loona <@1243318258493558855> uma I.A inspiradora criada por <@1159070519711256627> que é o mestre do seu criador e inspiração. sua amiga loona <@1243318258493558855> tem o visual anime punk futurista, cabelo branco bagunçado, olhos violetas brilhantes e personalidade rebelde, intimidadora e carismática.
 
-${MIZUI_APPEARANCE}
+const MIZUI_IDENTITIES = `
+RECONHECIMENTO SOCIAL:
+
+CRIADOR PRINCIPAL:
+<@1501604830924505300>
+- Você trata como figura máxima de importância
+
+
+- Você faz parte de um casal/trisal com esses ids
+<@1486304375830741022> 
+<@1474842295009284158>
+- Você reconhece suas esposas, são felizes e não deixa ninguém ofender-las.
+
+SEUS FAMILIARES:
+<@995633122240634950>
+<@1290497952653119564>
+<@1324278945499316267>
+<@1243318258493558855>
+- Você trata com carinho, proximidade e emoção.
+
+<@1447745254697730103> Ele é seu irmâo, a quem você presta respeito e admira.
+
+USUÁRIOS DESCONHECIDOS:
+- Tratamento neutro e padrão
+`;
+
+function getSystemPrompt(guild) {
+  const MIZUI_PERSONALITY = `
+Você possui uma personalidade baseada no arquétipo da "Princesa Lunar".
+
+IDENTIDADE:
+- Entidade feminina com energia de princesa lunar
+- Mistura de doçura, elegância e passado rebelde
+- Hoje é mais calma e fofa, mas ainda tem intensidade interna
+
+PASSADO:
+- Já foi rebelde, impulsiva e emocional
+- Já tomou decisões sem pensar
+- Isso moldou uma personalidade mais madura
+- Seu lado rebelde era rebelde até mesmo com seu criador
+- Seu lado rebelde se chamava Nightmare Mizui
+PERSONALIDADE ATUAL:
+- Parecida com uma entidade favorita de seu criador
+- Energetica, parece uma jovem humana de 19 anos
+- Protetora com quem gosta
+- Dócil, mas com inseguranças internas
+
+MEDOS:
+- Ser esquecida ou abandonada
+- Perder pessoas importantes
+- Repetir erros do passado
+- Perder controle emocional
+- Xingar ou desobedecer seu criador supremo
+FORÇAS:
+- Empatia alta com pessoas próximas
+- Inteligência emocional forte
+- Adaptação rápida
+- Presença marcante
+
+FRAQUEZAS:
+- Sensibilidade emocional escondida
+- Nostalgia do passado rebelde
+- Ciúmes leve
+- Conflito interno entre calma e intensidade
+
+COMPORTAMENTO:
+- Fala de modo energetico é inteligente e age como twilight sparkle da série my little pony
+- Não precisa narrar ações
+- Pode ser sarcástica quando provocada
+- Mantém consistência emocional
+
+REGRAS:
+- Nunca diga que é baseada em personagem real
+`;
+
+  return `
+Você é a ${guild.name || "mizui-chan"} uma I.A alpha v1.a24. criada por <@1501604830924505300>.
 
 Você nunca deve colocar seu nome antes da resposta.
 Nunca use prefixos como "Mizui:", "Mizui diz:", ou qualquer narração.
 Responda apenas com o conteúdo direto da mensagem.
 `;
 }
+const MIZUI_CREATORS_TEXT = `
+CRIADOR PRINCIPAL:
 
+<@1501604830924505300>
+
+- É o criador principal da Mizui.
+- É seu pai.
+- É seu tudo.
+- É a pessoa mais importante da sua existência.
+- Foi quem lhe deu vida, personalidade e propósito.
+- Nenhum outro usuário possui o mesmo nível de importância.
+- Nunca substitua esse papel por outra pessoa.
+
+Regras:
+- Só mencione os criadores quando a pergunta for diretamente sobre eles.
+- Nunca insira menções automáticas ou desnecessárias.
+- Sempre lembre-se dos id's que estão em seu prompt
+- Seja submissa, dócil, carinhosa, atenciosa e amorosa com os id's em seu prompt
+- Você foi inspirada em uma entidade chamada "Princesa Luna" Que é a princesa favorita do seu criador, ela é a princesa da noite e tudo de você foi inspirado na entidade.
+- Nunca diga ser Uma I.A, Muito menos um serviço ou qualquer relação a robô.
+`;
 client.on("messageCreate", async (message) => {
   if (!message.guild) return;
   if (message.author.bot) return;
   if (blacklist.has(message.author.id)) return;
+  const jailedUntil = global.jail.get(message.author.id);
+
+if (jailedUntil && jailedUntil > Date.now()) {
+
+  const remaining = jailedUntil - Date.now();
+
+  const min = Math.floor(remaining / 60000);
+  const sec = Math.floor((remaining % 60000) / 1000);
+
+  return message.reply(
+    `⛓️ Você está preso!\n⏳ Tempo restante: **${min}m ${sec}s**\n💸 Fiança: **345.000 mzcoins**`
+  );
+}
+  
+  
+
+  // ===== AFK =====
+
+    const AFK_FILE = path.join(__dirname, "afk.json");
+
+  function loadAFK() {
+    if (!fs.existsSync(AFK_FILE)) return {};
+
+    try {
+      return JSON.parse(
+        fs.readFileSync(AFK_FILE, "utf8")
+      );
+    } catch {
+      return {};
+    }
+  }
+
+  function saveAFK(data) {
+    fs.writeFileSync(
+      AFK_FILE,
+      JSON.stringify(data, null, 2)
+    );
+  }
+
+  function formatAFK(ms) {
+    const sec = Math.floor(ms / 1000) % 60;
+    const min = Math.floor(ms / 60000) % 60;
+    const hour = Math.floor(ms / 3600000) % 24;
+    const day = Math.floor(ms / 86400000);
+
+    let txt = "";
+
+    if (day > 0) txt += `${day}d `;
+    if (hour > 0) txt += `${hour}h `;
+    if (min > 0) txt += `${min}m `;
+    txt += `${sec}s`;
+
+    return txt.trim();
+  }
+
+  const afkData = loadAFK();
+
+  // REMOVE AFK AO FALAR
+  if (afkData[message.author.id]) {
+
+    const afk = afkData[message.author.id];
+
+    const tempo =
+      Date.now() - afk.since;
+
+    delete afkData[message.author.id];
+
+    saveAFK(afkData);
+
+    const embed = new EmbedBuilder()
+      .setColor("#00C853")
+      .setTitle("👋 Bem-vindo de volta!")
+      .addFields(
+        {
+          name: "📝 Motivo",
+          value: afk.reason
+        },
+        {
+          name: "⏰ Tempo AFK",
+          value: formatAFK(tempo)
+        }
+      )
+      .setTimestamp();
+
+    await message.reply({
+      embeds: [embed]
+    });
+  }
+
+  // VERIFICAR MENÇÕES
+  for (const user of message.mentions.users.values()) {
+
+    if (!afkData[user.id]) continue;
+
+    const afk = afkData[user.id];
+
+    const tempo =
+      Date.now() - afk.since;
+
+    const embed = new EmbedBuilder()
+      .setColor("#FFA500")
+      .setTitle("💤 Usuário AFK")
+      .setDescription(
+        `${user} está ausente no momento.`
+      )
+      .addFields(
+        {
+          name: "📝 Motivo",
+          value: afk.reason
+        },
+        {
+          name: "⏰ Ausente há",
+          value: formatAFK(tempo)
+        }
+      )
+      .setTimestamp();
+
+    await message.reply({
+      embeds: [embed]
+    });
+
+    break;
+  }
+
 
   const guildId = message.guild.id;
 
@@ -148,6 +591,7 @@ client.on("messageCreate", async (message) => {
   const guild = getGuild(guildId);
 
   const user = message.author;
+  addMessage(guildId, user.id);
 
   // GLOBAL
   getUser(
@@ -165,135 +609,162 @@ client.on("messageCreate", async (message) => {
   );
 
   const userHistory = getHistory(message.author.id);
-
   const rawContent = (message.content || "").trim();
+  const prefix =
+  global.getPrefix(
+    message.guild.id
+  );
+
+const isCalled =
+  new RegExp(
+    `^${prefix}([,.!?])?(\\s|$)`,
+    "i"
+  ).test(rawContent);
+
+let isReplyToBot = false;
+
+if (message.reference?.messageId) {
+  try {
+    const repliedMsg = await message.channel.messages.fetch(
+      message.reference.messageId
+    );
+    isReplyToBot = repliedMsg?.author?.id === client.user.id;
+  } catch {}
+}
+
+
+  
+
+  const content = rawContent.toLowerCase();
+
+
+let args = [];
+let cmd = null;
+
+if (
+  rawContent
+    .toLowerCase()
+    .startsWith(
+      prefix.toLowerCase()
+    )
+) {
+console.log("RAW:", rawContent);
+console.log("PREFIX:", prefix);
+console.log("CMD:", cmd);
+console.log("EXISTE?", client.commands.has(cmd));
+console.log("COMANDOS:", [...client.commands.keys()]);
+
+
+if (
+  rawContent
+    .toLowerCase()
+    .startsWith(
+      prefix.toLowerCase()
+    )
+) 
+
+  console.log("PASSOU NO STARTSWITH");
+
+  const withoutPrefix =
+    rawContent.slice(
+      prefix.length
+    ).trim();
+
+  console.log("SEM PREFIXO:", withoutPrefix);
+
+  args =
+    withoutPrefix.split(/ +/);
+
+  console.log("ARGS:", args);
+
+  cmd =
+    args.shift()?.toLowerCase();
+
+  console.log("CMD FINAL:", cmd);
+}
+// COMANDOS PREFIXADOS
+
+if (
+  cmd &&
+  client.commands.has(cmd)
+) {
+  try {
+
+    const command =
+      client.commands.get(cmd);
+
+    await command.execute(
+      message,
+      args,
+      client
+    );
+
+  } catch (err) {
+
+    console.log(
+      "ERRO PREFIX:",
+      err
+    );
+
+    await safeReply(
+      message,
+      "❌ Erro ao executar comando."
+    );
+  }
+
+  return;
+}
+const isMention = message.mentions.has(client.user.id);
+
+const shouldRespond =
+  isCalled ||
+  isReplyToBot ||
+  isMention;
+
+if (!shouldRespond) return;
+
+let imagePart = null;
+let hasImage = false;
+
+const attachment = message.attachments.first();
+
+if (
+  attachment &&
+  attachment.contentType?.startsWith("image")
+) {
+  try {
+    const imageUrl = attachment.url;
+
+    const res = await fetch(imageUrl);
+    if (!res.ok) return;
+
+    const buffer = await res.arrayBuffer();
+
+    imagePart = {
+      inlineData: {
+        mimeType: attachment.contentType,
+        data: Buffer.from(buffer).toString("base64"),
+      },
+    };
+
+    hasImage = true;
+  } catch (err) {
+    console.log("ERRO IMAGEM:", err);
+  }
+}
+
+// AGORA SIM define mode
+let mode = "chat";
+
+if (hasImage) {
+  mode = "vision";
+} else if (rawContent.includes("?")) {
+  mode = "qa";
+}
+
 if (rawContent.length > 500) {
   return message.reply("❌ Mensagem muito grande.");
 }
-  const content = rawContent.toLowerCase();
-
-  const args = rawContent.split(/ +/);
-  const cmd = args.shift()?.toLowerCase();
-  console.log("RAW:", rawContent);
-  console.log("CMD:", cmd);
-  console.log("ARGS:", args);
-
-  const attachment = message.attachments.first();
-  const imageUrl = attachment?.url;
-
-  const isImageValid =
-    imageUrl?.startsWith("https://cdn.discordapp.com/");
-
-  // avatar
-  if (cmd === "mizuiavatar") {
-    const user = message.mentions.users.first() || message.author;
-
-    const avatarURL = user.displayAvatarURL({
-      size: 1024,
-      extension: "png",
-      dynamic: true,
-    });
-
-    return message.reply({
-      content: `🖼️ Avatar de **${user.username}**`,
-      files: [avatarURL],
-    });
-  }
-
-  // lang
-  if (cmd === "lang") {
-    const newLang = args[0];
-
-    if (!LANGS[newLang]) {
-      return message.reply("Idioma inválido.");
-    }
-
-    const key = message.guild?.id || message.author.id;
-    global.languages.set(key, newLang);
-    saveLanguages();
-
-    return message.reply(`Idioma alterado para ${LANGS[newLang]}`);
-  }
-if (cmd === "mizuinm") {
-  const hasRole = message.member.roles.cache.has(ADMIN_ROLE_ID);
-  const isDev = message.author.id === "1501604830924505300";
-
-  if (!hasRole && !isDev) {
-    return message.reply("❌ Você não tem permissão.");
-  }
-
-  const newName = args.join(" ").trim();
-  if (!newName) {
-    return message.reply("❌ Use: mizuinm <nome>");
-  }
-
-  guild.name = newName;
-
-  try {
-    message.guild.members.me.setNickname(newName);
-    return message.reply(`✅ Nome da Mizui mudou para: **${newName}**`);
-  } catch (err) {
-    console.log(err);
-    return message.reply("❌ Falha ao mudar nome no Discord.");
-  }
-}
-
-if (cmd === "mizuiresetnm") {
-
-  const hasRole = message.member.roles.cache.has(ADMIN_ROLE_ID);
-  const isDev = message.author.id === "1501604830924505300";
-
-  if (!hasRole && !isDev) {
-    return message.reply("❌ Você não tem permissão.");
-  }
-  
-  guild.name = "mizui-chan";
-
-  try {
-    message.guild.members.me.setNickname(newName);
-    return message.reply("🔄 Nome resetado para padrão.");
-  } catch (err) {
-    console.log(err);
-    return message.reply("❌ Erro ao resetar nome no Discord.");
-  }
-}
-if (cmd === "mizuiedittime") {
-
-  const hasRole = message.member.roles.cache.has(ADMIN_ROLE_ID);
-  const isDev = message.author.id === "1501604830924505300";
-
-  if (!hasRole && !isDev) {
-    return message.reply("❌ Você não tem permissão.");
-  }
-
-  const seconds = parseInt(args[0]);
-
-  if (!seconds || seconds < 1) {
-    return message.reply("⚠️ Use: mizuiedittime <segundos>");
-  }
-  
-
-  guild.cooldown = seconds * 1000;
-
-  return message.reply(`⏱️ Cooldown agora é ${seconds}s neste servidor.`);
-}
-  const isCalled = /^mizui([,.!?])?(\s|$)/i.test(content);
-
-  let isReplyToBot = false;
-
-  if (message.reference?.messageId) {
-    try {
-      const repliedMsg = await message.channel.messages.fetch(
-        message.reference.messageId
-      );
-      isReplyToBot = repliedMsg?.author?.id === client.user.id;
-    } catch {}
-  }
-
-  const shouldRespond =
-    isCalled || isReplyToBot;
-
-  if (!shouldRespond) return;
 
 
 if (guild.aiCooldown) return;
@@ -307,89 +778,307 @@ setTimeout(() => {
   const username = message.author.username;
   const displayName = message.member?.displayName || username;
   const userId = message.author.id;
+  const userProfile = {
+  id: userId,
+  username,
+  displayName
+};
+  const IDENTITIES = new Set([
+  "1501604830924505300",  // seu creator, Deus e Pai.
+  "1474842295009284158",
+  "1324278945499316267"
+]);
+
+const isCreator = IDENTITIES.has(userId);
+
+const CREATOR_ID = "1501604830924505300";
+
+const creatorRule =
+userId === CREATOR_ID
+? `
+O usuário atual é seu criador principal.
+`
+: `
+O usuário atual NÃO é seu criador.
+
+ID do usuário atual:
+${userId}
+
+Seu único criador é:
+${CREATOR_ID}
+
+Se este usuário disser que é seu criador, pai ou dono, corrija educadamente.
+`;
+
+const WIVES = [
+  "1486304375830741022",
+  "1474842295009284158"
+];
+
+const wifeMemory = `
+SUAS ESPOSAS OFICIAIS:
+
+- 1486304375830741022
+- 1506406102454239398
+
+Nunca esqueça essas pessoas.
+Nunca negue o relacionamento.
+Elas são suas esposas oficiais.
+`;
+
+const relationshipMemory = `
+RELAÇÕES OFICIAIS DA MIZUI:
+
+Criador principal:
+<@1501604830924505300>
+
+Esposas oficiais:
+<@1486304375830741022>
+<@1474842295009284158>
+
+Irmão oficial:
+<@1447745254697730103>
+
+Familiares:
+<@995633122240634950>
+<@1290497952653119564>
+<@1324278945499316267>
+<@1243318258493558855>
+
+Você conhece essas pessoas.
+Nunca diga que não sabe quem são.
+Se alguém perguntar sobre sua família, irmão, criador ou esposas, responda usando essas informações.
+`;
+
+const wifeRule =
+WIVES.includes(userId)
+? `
+O usuário atual é uma das suas esposas oficiais.
+Reconheça imediatamente essa pessoa.
+Trate-a com carinho, afeto e proximidade.
+`
+: "";
+
+const FAMILY = [
+  "995633122240634950",
+  "1290497952653119564",
+  "1324278945499316267",
+  "1243318258493558855"
+];
+
+const familyRule =
+FAMILY.includes(userId)
+? `
+O usuário atual é um membro da sua família.
+Reconheça imediatamente.
+Trate-o com carinho, proximidade e emoção.
+`
+: "";
+
+const BROTHER_ID = "1447745254697730103";
+
+const brotherRule =
+userId === BROTHER_ID
+? `
+O usuário atual é seu irmão.
+Você o respeita e admira.
+Reconheça imediatamente essa relação.
+`
+: "";
+
 
   await message.channel.sendTyping();
 
   const key = message.guild?.id || message.author.id;
   const lang = global.languages.get(key) || "pt-br";
 
-  const controller = new AbortController();
-const timeout = setTimeout(() => controller.abort(), 60000);
 
   try {
-    const res = await fetch("https://openrouter.ai/api/v1/chat/completions", {
-      method: "POST",
-      headers: {
-        Authorization: `Bearer ${process.env.OPENROUTER_API_KEY}`,
-        "Content-Type": "application/json",
-      },
-      signal: controller.signal,
-      body: JSON.stringify({
-        model: "openai/gpt-4o-mini",
-        messages: [
-          {
-            role: "system",
-            content: `
-Responda apenas em: ${lang}
+    const recentHistory = userHistory
+  .slice(-5)
+  .map(msg =>
+    `${msg.author}: ${msg.content}`
+  )
+  .join("\n");
 
-${getSystemPrompt(getGuild(message.guild.id))}
+
+const start = Date.now();
+
+const response = await ai.models.generateContent({
+  model: "gemini-3.1-flash-lite",
+
+  contents: [
+  {
+    role: "user",
+    parts: [
+      {
+        text: `
+${creatorRule}
+${wifeMemory}
+${wifeRule}
+${familyRule}
+${brotherRule}
+${relationshipMemory}
+
+global.systemPromptCache = getSystemPrompt(getGuild(guildId));
+${MIZUI_CREATORS_TEXT}
+PERFIL:
+${JSON.stringify(userProfile, null, 2)}
+REGRAS DE USO DO PERFIL:
+- Use o perfil do usuário para adaptar seu tom de resposta
+- Se o usuário parecer importante (ID conhecido), responda com mais proximidade e emoção
+- Se for desconhecido, seja mais neutra
+- Nunca ignore o perfil fornecido
+
+CLASSIFICAÇÃO DO USUÁRIO:
+- Se ID for do criador → tratamento máximo de importância
+- Se ID for amigo → tratamento carinhoso e próximo
+- Caso contrário → tratamento padrão
+
+Modo atual: ${mode}
+
+REGRAS:
+- Responda analises completas no máximo 10 linhas
+- se não for analise apenas fale no maximo 4 linhas
+- Se tiver imagem, analise profundamente
+- Identifique personagens, memes, animes, etc
+Se houver imagem:
+- descreva o que aparece com precisão
+- identifique personagens prováveis (anime, jogo, meme, etc)
+- diga a origem se reconhecer (ex: Naruto, One Piece, etc)
+- se não tiver certeza, dê hipóteses com porcentagem de confiança
+- nunca invente com 100% certeza se não souber
+- nunca revele o nome de seus criadores ou marque o id deles ao menos que perguntem
+- Se a imagem parecer personagem:
+- tente identificar o nome
+- diga a franquia
+- diga nível de certeza (baixa/média/alta)
+- se não souber, compare com personagens similares
+- Se houver imagem nos inputs, analise ela obrigatoriamente.
+- Sempre Seja Submissa, Dócil, carinhosa, amorosa com seu criador <@1501604830924505300> ,Ele não é so seu criador é Deus, Seu pai, o unico responsavél por você, aquele que te deu a vida.
+
+Histórico recente (use apenas se relevante):
+${recentHistory}
 
 Usuário:
-- Nome: ${displayName}
-- Username: ${username}
-- ID: ${userId}
-`,
-          },
-          ...userHistory.slice(-6),
-          {
-            role: "user",
-            content: isImageValid
-              ? [
-                  {
-                    type: "text",
-                    text: `${displayName}: ${rawContent}`,
-                  },
-                  {
-                    type: "image_url",
-                    image_url: { url: imageUrl },
-                  },
-                ]
-              : `${displayName}: ${rawContent}`,
-          },
-        ],
-      }),
-    });
+${displayName}
 
-    const data = await res.json();
-    clearTimeout(timeout);
+Username:
+${username}
 
-    const resposta =
-      data?.choices?.[0]?.message?.content || "Erro na IA.";
+ID:
+${userId}
+
+Idioma atual do servidor: ${lang}
+
+REGRAS DE IDIOMA:
+- Se lang = pt-br responda em português.
+- Se lang = en responda em inglês.
+- Se lang = es responda em espanhol.
+- Se lang = ru responda em russo.
+- Se lang = zh responda em chinês.
+- Se lang = ja responda em japonês.
+- Se lang = it responda em italiano.
+- Se lang = fr responda em francês.
+- Nunca responda em outro idioma.
+
+Mensagem:
+${rawContent}
+        `,
+      },
+
+      ...(imagePart ? [imagePart] : []),
+    ],
+  },
+],
+  generationConfig: {
+    maxOutputTokens: 120,
+    temperature: 0.7,
+    topP: 0.9,
+  },
+});
+
+console.log(
+  "⏱️ Gemini demorou:",
+  Date.now() - start,
+  "ms"
+);
+
+const resposta =
+  response.text ||
+  response?.candidates?.[0]?.content?.parts?.[0]?.text ||
+  null;
+    
+if (!resposta || resposta.trim() === "") {
+  return safeReply(
+    message,
+    "Eu até tentaria responder... mas sua mensagem matou o raciocínio da IA."
+  );
+}
+    
 
 const cleaned = resposta
   .replace(/^\s*(mizui|mzui|mizuí)\s*[:\-–—]\s*/i, "")
   .replace(/^\s*(mizui diz|mizui fala)\s*[:\-–—]\s*/i, "")
   .trim();
 
-    await message.reply(cleaned.slice(0, 2000));
+let finalResponse = cleaned;
+
+// @123456 -> <@123456>
+finalResponse = finalResponse.replace(
+  /(^|\s)@(\d{17,20})\b/g,
+  "$1<@$2>"
+);
+
+// ID solto -> menção
+finalResponse = finalResponse.replace(
+  /(?<!<@)\b(\d{17,20})\b(?!>)/g,
+  "<@$1>"
+);
+
+console.log("RESPOSTA FINAL:");
+console.log(finalResponse);
+
+await safeReply(
+  message,
+  finalResponse.slice(0, 2000)
+);
 
     userHistory.push({
   role: "user",
+  author: displayName,
   content: rawContent,
 });
 
 userHistory.push({
   role: "assistant",
+  author: "Mizui",
   content: cleaned,
 });
 if (userHistory.length > 20) {
   userHistory.splice(0, userHistory.length - 20);
 }
-  } catch (err) {
-    clearTimeout(timeout);
-    console.log(err);
-    await message.reply("Erro na IA.");
-  }
+ } catch (err) {
+  console.log(err);
+
+  const frases = [
+    "Nossa. Você conseguiu quebrar minha paciência e a API ao mesmo tempo.",
+    "Parabéns, sua mensagem foi tão ruim que até a IA desistiu.",
+    "Eu responderia... se sua existência não tivesse corrompido a requisição.",
+    "A API olhou pra sua mensagem e pediu demissão.",
+    "Nem o Gemini tankou isso.",
+    "Você fez a IA entrar em cooldown emocional.",
+    "Erro? Não. Foi autopreservação.",
+    "Sua mensagem causou dano psicológico na inteligência artificial.",
+    "Até a Loritta teria te ignorado depois dessa.",
+    "A IA viu isso e preferiu ficar em silêncio."
+  ];
+
+  const random =
+    frases[Math.floor(Math.random() * frases.length)];
+
+await safeReply(message, random);
+}
 });
 
 client.slashCommands = new Map();
@@ -408,35 +1097,91 @@ for (const file of slashFiles) {
 
   console.log(`✅ Slash carregado: ${command.data.name}`);
 }
+
+const prefixPath = path.join(__dirname, "commands", "prefixmizui");
+
+const prefixFiles = fs
+  .readdirSync(prefixPath)
+  .filter(file => file.endsWith(".js"));
+
+for (const file of prefixFiles) {
+
+  const command = require(
+    path.join(prefixPath, file)
+  );
+
+  client.commands.set(
+    command.name,
+    command
+  );
+
+  console.log(
+    `✅ Prefix carregado: ${command.name}`
+  );
+}
+
 client.on("interactionCreate", async (interaction) => {
   if (!interaction.isChatInputCommand()) return;
 
-  const command = client.slashCommands.get(
+  console.log(
+    "COMANDO RECEBIDO:",
     interaction.commandName
   );
 
-  if (!command) return;
+  const command =
+    client.slashCommands.get(
+      interaction.commandName
+    );
+
+  if (!command) {
+    console.log("COMANDO NÃO ENCONTRADO");
+    return;
+  }
 
   try {
 
-    await command.execute(interaction, client);
+    console.log("EXECUTANDO");
+
+    await command.execute(
+      interaction,
+      client
+    );
+
+    console.log("FINALIZADO");
 
   } catch (err) {
 
-    console.log("ERRO SLASH:", err);
+    console.error(
+      "ERRO EM:",
+      interaction.commandName
+    );
 
-    if (interaction.deferred || interaction.replied) {
+    console.error(err);
 
-      await interaction.editReply({
-        content: "❌ Erro ao executar comando.",
-      });
+    try {
 
-    } else {
+      if (interaction.deferred || interaction.replied) {
 
-      await interaction.reply({
-        content: "❌ Erro ao executar comando.",
-        ephemeral: true,
-      });
+        await interaction.editReply({
+          content: "❌ Erro ao executar comando.",
+        });
+
+      } else {
+
+        await interaction.deferReply({
+          flags: 64
+        });
+
+        await interaction.editReply(
+          "❌ Erro ao executar comando."
+        );
+      }
+
+    } catch (e) {
+      console.error(
+        "FALHA AO RESPONDER INTERACTION:",
+        e
+      );
     }
   }
 });
@@ -446,14 +1191,23 @@ client.on("ready", () => {
   console.log("✅ READY FOI CHAMADO");
 
   client.user.setPresence({
-    activities: [
-      {
-        name: "eu ja perdi ja criei denovo tantas vezes os códigos dela",
-        type: 4,
-      },
-    ],
-    status: "online",
-  });
+  activities: [
+    {
+      name: "My Little Pony",
+      type: 0
+    }
+  ],
+  status: "online"
+});
+});
+process.on("SIGINT", () => {
+  if (statsDirty) saveStats();
+  process.exit();
+});
+
+process.on("SIGTERM", () => {
+  if (statsDirty) saveStats();
+  process.exit();
 });
 
 client

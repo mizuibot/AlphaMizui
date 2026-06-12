@@ -7,51 +7,135 @@ const path = require("path");
 const app = express();
 const PORT = process.env.PORT || 3000;
 
-// ===================== STATIC =====================
 app.use(express.static(__dirname));
 
-// ===================== CORS =====================
 app.use((req, res, next) => {
   res.setHeader("Access-Control-Allow-Origin", "*");
   next();
 });
 
-// ===================== FUNÇÃO AUXILIAR =====================
+
+// ===================== CACHE GLOBAL =====================
+let economyCache = { users: {} };
+let guildCache = { guilds: {} };
+
+// carrega inicial
+function loadCache() {
+  try {
+    economyCache = JSON.parse(fs.readFileSync("./economy.json", "utf8"));
+  } catch (e) {
+    console.log("ERRO ECONOMY CACHE:", e.message);
+  }
+
+  try {
+    guildCache = JSON.parse(fs.readFileSync("./guild-economy.json", "utf8"));
+  } catch (e) {
+    console.log("ERRO GUILD CACHE:", e.message);
+  }
+}
+
+// atualiza a cada 30s
+setInterval(loadCache, 30000);
+loadCache();
+
+
+// ===================== RANK GUILD =====================
 function getGuildRanking(guildId) {
-
-  const db = JSON.parse(
-    fs.readFileSync("./guild-economy.json", "utf8")
-  );
-
-  const guild = db.guilds?.[guildId];
-
-  if (!guild || !guild.users) return [];
+  const guild = guildCache?.guilds?.[guildId];
+  if (!guild?.users) return [];
 
   return Object.entries(guild.users)
     .map(([id, data]) => ({
       id,
       name: data.username || data.name || "Unknown",
-      avatar: data.avatar || "https://cdn.discordapp.com/embed/avatars/0.png",
       coins: Number(data.coins) || 0
     }))
     .sort((a, b) => b.coins - a.coins)
     .slice(0, 15);
 }
 
-// ===================== GLOBAL API =====================
-app.get("/leaderboard", (req, res) => {
 
+// ===================== GLOBAL SVG =====================
+app.get("/leaderboard-img-global", (req, res) => {
   try {
+    const ranking = Object.entries(economyCache.users || {})
+      .map(([id, data]) => ({
+        name: data.username || "Unknown",
+        coins: Number(data.coins) || 0
+      }))
+      .sort((a, b) => b.coins - a.coins)
+      .slice(0, 10);
 
-    const db = JSON.parse(
-      fs.readFileSync("./economy.json", "utf8")
-    );
+    let items = "";
 
-    const ranking = Object.entries(db.users || {})
+    for (let i = 0; i < ranking.length; i++) {
+      const u = ranking[i];
+      items += `<text x="50" y="${80 + i * 28}" fill="white" font-size="18">
+#${i + 1} ${u.name} - ${u.coins}
+</text>`;
+    }
+
+    const svg = `
+<svg width="800" height="500" xmlns="http://www.w3.org/2000/svg">
+  <rect width="100%" height="100%" fill="black"/>
+  <text x="50" y="40" fill="gold" font-size="26">🏆 GLOBAL LEADERBOARD</text>
+  ${items}
+</svg>
+`;
+
+    res.setHeader("Content-Type", "image/svg+xml");
+    res.setHeader("Cache-Control", "public, max-age=30");
+
+    return res.status(200).send(svg);
+
+  } catch (err) {
+    console.log("ERRO GLOBAL IMG:", err);
+    return res.status(500).send("Erro");
+  }
+});
+
+
+// ===================== GUILD SVG =====================
+app.get("/leaderboard-img/:guildId", (req, res) => {
+  try {
+    const ranking = getGuildRanking(req.params.guildId);
+
+    let items = "";
+
+    for (let i = 0; i < ranking.length; i++) {
+      const u = ranking[i];
+      items += `<text x="50" y="${80 + i * 28}" fill="white" font-size="18">
+#${i + 1} ${u.name} - ${u.coins}
+</text>`;
+    }
+
+    const svg = `
+<svg width="800" height="500" xmlns="http://www.w3.org/2000/svg">
+  <rect width="100%" height="100%" fill="#111"/>
+  <text x="50" y="40" fill="#ff66c4" font-size="26">🏰 Leaderboard do Servidor</text>
+  ${items}
+</svg>
+`;
+
+    res.setHeader("Content-Type", "image/svg+xml");
+    res.setHeader("Cache-Control", "public, max-age=30");
+
+    return res.status(200).send(svg);
+
+  } catch (err) {
+    console.log("ERRO GUILD IMG:", err);
+    return res.status(500).send("Erro");
+  }
+});
+
+
+// ===================== JSON API =====================
+app.get("/leaderboard", (req, res) => {
+  try {
+    const ranking = Object.entries(economyCache.users || {})
       .map(([id, data]) => ({
         id,
         name: data.username || "Unknown",
-        avatar: data.avatar || "https://cdn.discordapp.com/embed/avatars/0.png",
         coins: Number(data.coins) || 0
       }))
       .sort((a, b) => b.coins - a.coins)
@@ -62,94 +146,17 @@ app.get("/leaderboard", (req, res) => {
       }));
 
     res.json(ranking);
-
-  } catch (err) {
-    console.log("ERRO GLOBAL:", err);
+  } catch {
     res.json([]);
   }
 });
 
-// ===================== GUILD API =====================
-app.get("/leaderboard/:guildId", (req, res) => {
 
-  try {
-
-    const ranking = getGuildRanking(req.params.guildId)
-      .map((u, i) => ({
-        position: i + 1,
-        ...u
-      }));
-
-    res.json(ranking);
-
-  } catch (err) {
-    console.log("ERRO GUILD:", err);
-    res.json([]);
-  }
+// ===================== HOME =====================
+app.get("/", (req, res) => {
+  res.redirect("/global");
 });
 
-// ===================== 🔥 PASSO 1: RENDER HTML (LOCAL IMAGEM) =====================
-app.get("/leaderboard-img/:guildId", (req, res) => {
-
-  const ranking = getGuildRanking(req.params.guildId);
-
-  let html = `
-  <html>
-  <head>
-  <style>
-    body {
-      margin:0;
-      font-family: Arial;
-      background: radial-gradient(circle at top, #14001f, #000);
-      color:white;
-      padding:20px;
-    }
-
-    h1 {
-      text-align:center;
-      color:#ff66c4;
-      text-shadow:0 0 10px #ff1493;
-    }
-
-    .card {
-      display:flex;
-      justify-content:space-between;
-      padding:12px;
-      margin:8px;
-      background:#12001f;
-      border-left:4px solid #ff1493;
-      border-radius:10px;
-    }
-
-    .rank {
-      width:40px;
-      color:#aaa;
-      font-weight:bold;
-    }
-  </style>
-  </head>
-  <body>
-
-  <h1>🏆 Leaderboard</h1>
-  `;
-
-  ranking.forEach((u, i) => {
-
-    html += `
-      <div class="card">
-        <div class="rank">#${i + 1}</div>
-        <div>${u.name}</div>
-        <div>${u.coins} coins</div>
-      </div>
-    `;
-  });
-
-  html += `</body></html>`;
-
-  res.send(html);
-});
-
-// ===================== PÁGINAS =====================
 app.get("/global", (req, res) => {
   res.sendFile(path.join(__dirname, "index.html"));
 });
@@ -158,15 +165,10 @@ app.get("/guild", (req, res) => {
   res.sendFile(path.join(__dirname, "guild.html"));
 });
 
-// ===================== HOME =====================
-app.get("/", (req, res) => {
-  res.redirect("/global");
-});
 
 // ===================== START =====================
 app.listen(PORT, () => {
   console.log("🌐 WEB ONLINE");
-  console.log("GLOBAL: http://127.0.0.1:3000/global");
-  console.log("GUILD:  http://127.0.0.1:3000/guild?guild=ID");
-  console.log("IMG:    http://127.0.0.1:3000/leaderboard-img/ID");
+  console.log("GLOBAL IMG: /leaderboard-img-global");
+  console.log("GUILD IMG: /leaderboard-img/:guildId");
 });
