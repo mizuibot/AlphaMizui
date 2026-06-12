@@ -15,22 +15,18 @@ function _loadFromFile() {
   }
 
   const data = JSON.parse(fs.readFileSync(FILE, "utf8"));
-
   return data;
 }
 
 function loadDB() {
-  function loadDB() {
   return _loadFromFile();
 }
-
 
 function saveDB(db) {
   global.dbCache = db;
 
   fs.writeFileSync(FILE, JSON.stringify(db, null, 2));
 
-  // 🔥 força reload do cache
   global.dbCache = JSON.parse(JSON.stringify(db));
 }
 
