@@ -1,7 +1,8 @@
-const { EmbedBuilder } = require("discord.js");
-const { getUser, loadDB } = require("../../economy");
 const fs = require("fs");
 const path = require("path");
+const sharp = require("sharp");
+
+const { getUser, loadDB } = require("../../economy");
 
 // =====================
 // FILES
@@ -23,9 +24,7 @@ function loadStats() {
   if (!fs.existsSync(STATS_FILE)) return {};
 
   try {
-    return JSON.parse(
-      fs.readFileSync(STATS_FILE, "utf8")
-    );
+    return JSON.parse(fs.readFileSync(STATS_FILE, "utf8"));
   } catch {
     return {};
   }
@@ -38,16 +37,14 @@ function loadMarriages() {
   if (!fs.existsSync(MARRIAGES_FILE)) return {};
 
   try {
-    return JSON.parse(
-      fs.readFileSync(MARRIAGES_FILE, "utf8")
-    );
+    return JSON.parse(fs.readFileSync(MARRIAGES_FILE, "utf8"));
   } catch {
     return {};
   }
 }
 
 // =====================
-// RANK GLOBAL (FIXED)
+// RANK GLOBAL
 // =====================
 function getRank(db, userId) {
   const users = Object.entries(db.users || {});
@@ -55,11 +52,11 @@ function getRank(db, userId) {
   const sorted = users.sort((a, b) => {
     const aTotal =
       (BigInt(a[1]?.coins || "0") +
-       BigInt(a[1]?.bank || "0"));
+        BigInt(a[1]?.bank || "0"));
 
     const bTotal =
       (BigInt(b[1]?.coins || "0") +
-       BigInt(b[1]?.bank || "0"));
+        BigInt(b[1]?.bank || "0"));
 
     if (bTotal > aTotal) return 1;
     if (bTotal < aTotal) return -1;
@@ -132,120 +129,88 @@ module.exports = {
     const totalCount = userStats.total || 0;
 
     // =====================
-// ECONOMIA
-// =====================
+    // ECONOMIA
+    // =====================
+    const wallet = BigInt(user.coins || "0");
+    const bank = BigInt(user.bank || "0");
 
-const wallet = BigInt(user.coins || "0");
-const bank = BigInt(user.bank || "0");
+    let totalMoney = wallet + bank;
 
-let totalMoney = wallet + bank;
+    if (marriedTo.length > 0) {
 
-if (marriedTo.length > 0) {
+      const partnerId = marriedTo[0];
 
-  const partnerId = marriedTo[0];
+      const partner = getUser(
+        partnerId,
+        "Unknown",
+        ""
+      );
 
-  const partner = getUser(
-    partnerId,
-    "Unknown",
-    ""
-  );
+      totalMoney =
+        wallet +
+        bank +
+        BigInt(partner.coins || "0") +
+        BigInt(partner.bank || "0");
+    }
 
-  totalMoney =
-    wallet +
-    bank +
-    BigInt(partner.coins || "0") +
-    BigInt(partner.bank || "0");
+    // =====================
+    // TEXTO DA IMAGEM
+    // =====================
+    const text = `
+Perfil de ${message.author.username}
+
+Carteira: ${wallet.toString()} MZCoins
+Banco: ${bank.toString()} MZCoins
+Patrimônio: ${totalMoney.toString()} MZCoins
+Rank: ${rank}
+
+Works: ${user.work || 0}
+Dailys: ${user.daily || 0}
+
+Hoje: ${todayCount}
+Semana: ${weekCount}
+Mês: ${monthCount}
+Ano: ${yearCount}
+Total: ${totalCount}
+
+Status:
+${
+  marriedTo.length > 0
+    ? marriedTo.map(id => `<@${id}>`).join(", ") + " 💕"
+    : "💔 Solteiro"
 }
+`;
 
     // =====================
-    // EMBED
+    // GERAR IMAGEM (SHARP)
     // =====================
-    const embed = new EmbedBuilder()
-      .setColor(global.getEmbedColor(message.guild.id))
-      .setTitle(`👤 Perfil de ${message.author.username}`)
-      .setThumbnail(
-        message.author.displayAvatarURL({ dynamic: true })
-      )
+    const svg = `
+<svg width="900" height="600">
+  <rect width="100%" height="100%" fill="#0d1117"/>
+  <text x="20" y="40" fill="#ffffff" font-size="14" font-family="monospace">
+    ${text
+      .replace(/&/g, "&amp;")
+      .replace(/</g, "&lt;")
+      .replace(/>/g, "&gt;")
+      .split("\n")
+      .map((line, i) => `<tspan x="20" dy="${i === 0 ? 0 : 18}">${line}</tspan>`)
+      .join("")}
+  </text>
+</svg>
+`;
 
-      .addFields(
-        {
-          name: "💰 Carteira",
-          value: `${wallet.toString()} MZCoins`,
-          inline: true
-        },
-        {
-          name: "🏦 Banco",
-          value: `${bank.toString()} MZCoins`,
-          inline: true
-        },
-        {
-  name:
-    marriedTo.length > 0
-      ? "💎 Patrimônio Familiar"
-      : "💎 Patrimônio",
+    const image = await sharp(Buffer.from(svg))
+      .png()
+      .toBuffer();
 
-  value:
-    `${totalMoney.toString()} MZCoins`,
-
-  inline: true
-},
-        {
-          name: "🏆 Rank Global",
-          value: rank,
-          inline: true
-        },
-        {
-          name: "💼 Works",
-          value: `${user.work || 0}`,
-          inline: true
-        },
-        {
-          name: "📅 Dailys",
-          value: `${user.daily || 0}`,
-          inline: true
-        },
-        {
-          name: "💬 Hoje",
-          value: `${todayCount}`,
-          inline: true
-        },
-        {
-          name: "📅 Semana",
-          value: `${weekCount}`,
-          inline: true
-        },
-        {
-          name: "🗓️ Mês",
-          value: `${monthCount}`,
-          inline: true
-        },
-        {
-          name: "📆 Ano",
-          value: `${yearCount}`,
-          inline: true
-        },
-        {
-          name: "📊 Total Mensagens",
-          value: `${totalCount}`,
-          inline: true
-        },
-        {
-          name: "💍 Status",
-          value:
-            marriedTo.length > 0
-              ? marriedTo.map(id => `<@${id}>`).join(", ") + " 💕"
-              : "💔 Solteiro",
-          inline: false
-        }
-      )
-
-      .setFooter({
-        text: "Sistema Econômico Mizui"
-      })
-      .setTimestamp();
-
+    // =====================
+    // SEND IMAGE
+    // =====================
     return message.reply({
-      embeds: [embed]
+      files: [{
+        attachment: image,
+        name: "prol.png"
+      }]
     });
   }
 };

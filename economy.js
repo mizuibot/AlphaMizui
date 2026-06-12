@@ -1,7 +1,8 @@
 const fs = require("fs");
 const path = require("path");
 
-const FILE = path.join(__dirname, "economy.json");
+// 🔁 TROCA AQUI: agora usa profiles.json
+const FILE = path.join(__dirname, "profiles.json");
 const MARRIAGES_FILE = path.join(__dirname, "marriages.json");
 
 // =========================
@@ -10,10 +11,12 @@ const MARRIAGES_FILE = path.join(__dirname, "marriages.json");
 
 function _loadFromFile() {
   if (!fs.existsSync(FILE)) {
-    fs.writeFileSync(FILE, JSON.stringify({ users: {} }, null, 2));
+    fs.writeFileSync(FILE, JSON.stringify({}, null, 2));
   }
 
-  return JSON.parse(fs.readFileSync(FILE, "utf8"));
+  const data = JSON.parse(fs.readFileSync(FILE, "utf8"));
+
+  return data;
 }
 
 function loadDB() {
@@ -41,9 +44,7 @@ function loadMarriages() {
       );
     }
 
-    return JSON.parse(
-      fs.readFileSync(MARRIAGES_FILE, "utf8")
-    );
+    return JSON.parse(fs.readFileSync(MARRIAGES_FILE, "utf8"));
   } catch (err) {
     console.log("Erro marriages:", err);
     return {};
@@ -62,10 +63,8 @@ function saveMarriages(data) {
 // =========================
 
 function ensureUser(db, id, username = "Unknown", avatar = "") {
-  if (!db.users) db.users = {};
-
-  if (!db.users[id]) {
-    db.users[id] = {
+  if (!db[id]) {
+    db[id] = {
       coins: "0",
       bank: "0",
       work: 0,
@@ -73,11 +72,15 @@ function ensureUser(db, id, username = "Unknown", avatar = "") {
       username,
       avatar,
       inventory: [],
-      cooldowns: {}
+      cooldowns: {},
+
+      background: null,
+      bio: "",
+      customAvatar: null
     };
   }
 
-  const user = db.users[id];
+  const user = db[id];
 
   if (user.coins == null) user.coins = "0";
   if (user.bank == null) user.bank = "0";
@@ -88,8 +91,14 @@ function ensureUser(db, id, username = "Unknown", avatar = "") {
   if (typeof user.work !== "number") user.work = 0;
   if (typeof user.daily !== "number") user.daily = 0;
 
+  if (!user.background) user.background = null;
+  if (!user.bio) user.bio = "";
+  if (!user.customAvatar) user.customAvatar = null;
+
   return user;
 }
+
+  
 
 function getUser(id, username = "Unknown", avatar = "") {
   const db = loadDB();
@@ -258,7 +267,7 @@ function canUse(id, key, cooldown) {
 }
 
 // =========================
-// CASAMENTO (🔥 NOVO SISTEMA)
+// CASAMENTO
 // =========================
 
 function marry(userA, userB) {
@@ -285,7 +294,6 @@ function divorce(userId) {
   return true;
 }
 
-// 💰 SALDO COM CASAMENTO
 function getBalance(id) {
   const db = loadDB();
   const user = ensureUser(db, id);
@@ -342,7 +350,6 @@ module.exports = {
   canUse,
   formatTime,
 
-  // 💍 CASAMENTO
   marry,
   divorce,
   getBalance
