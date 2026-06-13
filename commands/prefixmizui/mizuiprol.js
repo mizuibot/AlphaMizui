@@ -27,12 +27,10 @@ function loadMarriages() {
 
 // =====================
 const ICONS = {
-  bank: "https://image.pngaaa.com/541/6187541-middle.png",
+  bank: "https://static.vecteezy.com/system/resources/thumbnails/060/665/567/small/charming-chibi-bank-building-digital-art-transparent-background-playful-design-whimsical-style-free-png.png",
   coins: "https://cdn-icons-png.magnific.com/256/9382/9382185.png",
   love: "https://static.vecteezy.com/system/resources/thumbnails/015/658/513/small/isometric-love-heart-icon-png.png",
-  joinServer: "https://cdn.iconscout.com/icon/premium/png-256-thumb/porta-icon-svg-download-png-3258625.png?f=webp&w=128",
-  joinDiscord: "https://media.gettyimages.com/id/1138819984/pt/vetorial/stick-figure-parachute-icon.jpg?s=612x612&w=0&k=20&c=Uh08Kg5VAAMh4LdLSkIIkBfPBb1Yd-ODLo7-ppdWh5Q",
-  calendar: "https://static.vecteezy.com/system/resources/thumbnails/012/708/647/small/calendar-icon-calendar-sign-and-symbol-in-line-style-icon-vector.jpg"
+  msg: "https://static.vecteezy.com/system/resources/thumbnails/012/708/647/small/calendar-icon-calendar-sign-and-symbol-in-line-style-icon-vector.jpg"
 };
 
 async function getBuffer(url) {
@@ -90,13 +88,13 @@ module.exports = {
       .toBuffer();
 
     const avatarBuffer = await sharp(await getBuffer(avatar))
-      .resize(140, 140)
+      .resize(160, 160)
       .png()
       .toBuffer();
 
     const mask = Buffer.from(`
-      <svg width="140" height="140">
-        <circle cx="70" cy="70" r="70" fill="white"/>
+      <svg width="160" height="160">
+        <circle cx="80" cy="80" r="80" fill="white"/>
       </svg>
     `);
 
@@ -106,12 +104,12 @@ module.exports = {
       .toBuffer();
 
     // =====================
-    // ÍCONES
+    // ÍCONES (MAIORES)
     // =====================
     const coinIcon = (await getBuffer(ICONS.coins)).toString("base64");
     const bankIcon = (await getBuffer(ICONS.bank)).toString("base64");
     const loveIcon = (await getBuffer(ICONS.love)).toString("base64");
-    const calendarIcon = (await getBuffer(ICONS.calendar)).toString("base64");
+    const msgIcon = (await getBuffer(ICONS.msg)).toString("base64");
 
     // =====================
     // SVG
@@ -120,34 +118,40 @@ module.exports = {
 <svg width="900" height="500">
 
   <image href="data:image/png;base64,${bgImage.toString("base64")}" width="900" height="500"/>
-
   <rect width="900" height="500" fill="rgba(0,0,0,0.55)"/>
 
-  <image href="data:image/png;base64,${roundedAvatar.toString("base64")}" x="30" y="30" width="140" height="140"/>
+  <image href="data:image/png;base64,${roundedAvatar.toString("base64")}" x="30" y="30" width="160" height="160"/>
 
   <!-- COINS -->
-  <image href="data:image/png;base64,${coinIcon}" x="200" y="80" width="18" height="18"/>
-  <text x="225" y="95" fill="white" font-size="16">Coins: ${wallet}</text>
+  <image href="data:image/png;base64,${coinIcon}" x="220" y="90" width="28" height="28"/>
+  <text x="260" y="110" fill="white" font-size="20">Coins: ${wallet}</text>
 
   <!-- BANK -->
-  <image href="data:image/png;base64,${bankIcon}" x="200" y="120" width="18" height="18"/>
-  <text x="225" y="135" fill="white" font-size="16">Bank: ${bank}</text>
+  <image href="data:image/png;base64,${bankIcon}" x="220" y="140" width="28" height="28"/>
+  <text x="260" y="160" fill="white" font-size="20">Bank: ${bank}</text>
 
   <!-- TOTAL -->
-  <image href="data:image/png;base64,${loveIcon}" x="200" y="160" width="18" height="18"/>
-  <text x="225" y="175" fill="white" font-size="16">Total: ${total}</text>
+  <image href="data:image/png;base64,${loveIcon}" x="220" y="190" width="28" height="28"/>
+  <text x="260" y="210" fill="white" font-size="20">Total: ${total}</text>
 
-  <!-- STATS -->
-  <image href="data:image/png;base64,${calendarIcon}" x="200" y="220" width="18" height="18"/>
-  <text x="225" y="235" fill="white" font-size="14">Hoje: ${today} | Semana: ${week}</text>
+  <!-- MSG STATS (SEM CALENDÁRIO, TUDO AQUI) -->
+  <image href="data:image/png;base64,${msgIcon}" x="220" y="250" width="28" height="28"/>
 
-  <text x="225" y="255" fill="white" font-size="14">Mês: ${month} | Ano: ${year}</text>
+  <text x="260" y="270" fill="white" font-size="18">
+    Hoje: ${today} | Semana: ${week}
+  </text>
+
+  <text x="260" y="295" fill="white" font-size="18">
+    Mês: ${month} | Ano: ${year}
+  </text>
 
   <!-- BIO -->
-  <text x="30" y="230" fill="white" font-size="14">Bio: ${bio}</text>
+  <text x="30" y="240" fill="white" font-size="18">
+    Bio: ${bio}
+  </text>
 
   <!-- CASAMENTO -->
-  <text x="30" y="260" fill="white" font-size="14">
+  <text x="30" y="270" fill="white" font-size="18">
     Status: ${married ? "Casado 💕" : "Solteiro 💔"}
   </text>
 
