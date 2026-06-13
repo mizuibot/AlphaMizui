@@ -85,3 +85,54 @@ module.exports = {
     }
 
     if (depositAmount > wallet) {
+      return message.reply(
+        "❌ Você não possui essa quantidade na carteira."
+      );
+    }
+
+    dbUser.coins = (
+      wallet - depositAmount
+    ).toString();
+
+    dbUser.bank = (
+      bank + depositAmount
+    ).toString();
+
+    saveDB(db);
+
+    const embed = new EmbedBuilder()
+      .setColor(
+        global.getEmbedColor(
+          message.guild.id
+        )
+      )
+      .setTitle("🏦 Depósito Realizado")
+      .setThumbnail(
+        message.author.displayAvatarURL({
+          dynamic: true
+        })
+      )
+      .addFields(
+        {
+          name: "💸 Depositado",
+          value: `${formatMoney(depositAmount)} MZCoins`,
+          inline: true
+        },
+        {
+          name: "👛 Carteira",
+          value: `${formatMoney(dbUser.coins)} MZCoins`,
+          inline: true
+        },
+        {
+          name: "🏦 Banco",
+          value: `${formatMoney(dbUser.bank)} MZCoins`,
+          inline: true
+        }
+      )
+      .setTimestamp();
+
+    return message.reply({
+      embeds: [embed]
+    });
+  }
+};
