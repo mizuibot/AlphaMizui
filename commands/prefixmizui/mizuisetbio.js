@@ -6,17 +6,25 @@ module.exports = {
   async execute(message, args) {
     const db = loadDB();
 
+    // 🔥 garante perfil
+    if (!db[message.author.id]) {
+      db[message.author.id] = {
+        coins: "0",
+        bank: "0",
+        work: 0,
+        daily: 0,
+        inventory: [],
+        cooldowns: {},
+        background: null,
+        bio: "",
+        customAvatar: null
+      };
+    }
+
     const user = db[message.author.id];
 
-    if (!user) {
-      return message.reply("❌ Perfil não encontrado.");
-    }
-
     const bio = args.join(" ").trim();
-
-    if (!bio) {
-      return message.reply("❌ Escreve uma bio.");
-    }
+    if (!bio) return message.reply("❌ Escreve uma bio.");
 
     user.bio = bio;
 
