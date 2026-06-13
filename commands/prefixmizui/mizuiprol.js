@@ -1,14 +1,11 @@
 const fs = require("fs");
 const path = require("path");
 const sharp = require("sharp");
-
 const { loadDB } = require("../../economy");
 
 const STATS_FILE = path.resolve(__dirname, "../../stats.json");
 const MARRIAGES_FILE = path.resolve(process.cwd(), "marriages.json");
 
-// =====================
-// HELPERS
 // =====================
 function loadStats() {
   if (!fs.existsSync(STATS_FILE)) return {};
@@ -29,17 +26,13 @@ function loadMarriages() {
 }
 
 // =====================
-// COMMAND
-// =====================
 module.exports = {
   name: "prol",
 
   async execute(message) {
     const db = loadDB();
-
     const userId = message.author.id;
 
-    // 🔥 SEM getUser (isso estava quebrando seus dados)
     const profile = db[userId] || {};
 
     const wallet = BigInt(profile.coins || "0");
@@ -54,9 +47,6 @@ module.exports = {
     const avatar =
       profile.customAvatar ||
       message.author.displayAvatarURL({ extension: "png", size: 512 });
-
-    const createdAt = message.author.createdAt;
-    const joinedAt = message.member?.joinedAt;
 
     // =====================
     // STATS
@@ -77,23 +67,17 @@ module.exports = {
     const married = marriages[userId]?.partner;
 
     // =====================
-    // IMAGENS
+    // IMAGENS (SEM FETCH — DIRETO NO SVG)
     // =====================
-    const bgBuffer = Buffer.from(
-      await fetch(background).then(r => r.arrayBuffer())
-    );
 
-    const avBuffer = Buffer.from(
+    const avatarBuffer = await sharp(
       await fetch(avatar).then(r => r.arrayBuffer())
-    );
-
-    // avatar redondo
-    const avatarResized = await sharp(avBuffer)
+    )
       .resize(140, 140)
       .png()
       .toBuffer();
 
-    const roundedAvatar = await sharp(avatarResized)
+    const roundedAvatar = await sharp(avatarBuffer)
       .composite([
         {
           input: Buffer.from(`
@@ -108,25 +92,23 @@ module.exports = {
       .toBuffer();
 
     // =====================
-    // TEXTO
+    // TEXTO (COM EMOJIS)
     // =====================
     const text = `
-${message.author.username}
+👤 ${message.author.username}
 
 💰 Coins: ${wallet}
 🏦 Bank: ${bank}
 💎 Total: ${total}
 
 💬 Hoje: ${today}
-📅 Semana: ${week}
-🗓️ Mês: ${month}
+📊 Semana: ${week}
+📈 Mês: ${month}
 📆 Ano: ${year}
 
 📝 Bio: ${bio}
-📅 Criado: ${new Date(createdAt).toLocaleDateString("pt-BR")}
-📍 Server: ${joinedAt ? new Date(joinedAt).toLocaleDateString("pt-BR") : "N/A"}
 
-💍 ${married ? "Casado 💕" : "Solteiro 💔"}
+💍 Status: ${married ? "Casado 💕" : "Solteiro 💔"}
 `;
 
     // =====================
@@ -135,7 +117,8 @@ ${message.author.username}
     const svg = `
 <svg width="900" height="500">
 
-  <image href="data:image/png;base64,${bgBuffer.toString("base64")}" width="900" height="500"/>
+  <image href="${background}" width="900" height="500" />
+
   <rect width="900" height="500" fill="rgba(0,0,0,0.55)"/>
 
   <image href="data:image/png;base64,${roundedAvatar.toString("base64")}" x="30" y="30" width="140" height="140"/>
@@ -158,12 +141,7 @@ ${message.author.username}
       .toBuffer();
 
     return message.reply({
-      files: [
-        {
-          attachment: image,
-          name: "prol.png"
-        }
-      ]
+      files: [{ attachment: image, name: "prol.png" }]
     });
   }
 };
