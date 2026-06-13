@@ -5,11 +5,18 @@ module.exports = {
 
   async execute(message, args) {
     const url = args[0];
-    if (!url) return message.reply("❌ Use: mizuisetbanner <link>");
+
+    if (!url) {
+      return message.reply("❌ Use: mizuisetbanner <link>");
+    }
+
+    // 🔥 validação básica de imagem direta
+    if (!url.match(/\.(png|jpg|jpeg|webp)$/)) {
+      return message.reply("❌ Use link direto de imagem (.png/.jpg/.jpeg/.webp)");
+    }
 
     const db = loadDB();
 
-    // 🔥 garante perfil
     if (!db[message.author.id]) {
       db[message.author.id] = {
         coins: "0",
@@ -24,9 +31,7 @@ module.exports = {
       };
     }
 
-    const user = db[message.author.id];
-
-    user.background = url;
+    db[message.author.id].background = url;
 
     saveDB(db);
 

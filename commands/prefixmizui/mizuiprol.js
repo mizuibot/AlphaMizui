@@ -41,8 +41,9 @@ module.exports = {
 
     const bio = profile.bio || "Sem biografia.";
     const background =
-      profile.background ||
-      "https://i.imgur.com/3ZQ3Z9D.jpeg";
+  profile.background?.match(/\.(png|jpg|jpeg|webp)$/)
+    ? profile.background
+    : "https://i.imgur.com/3ZQ3Z9D.jpeg";
 
     const avatar =
       profile.customAvatar ||
