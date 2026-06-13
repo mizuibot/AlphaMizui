@@ -1,7 +1,6 @@
 const fs = require("fs");
 const path = require("path");
 
-// 🔁 TROCA AQUI: agora usa profiles.json
 const FILE = path.join(__dirname, "profiles.json");
 const MARRIAGES_FILE = path.join(__dirname, "marriages.json");
 
@@ -14,20 +13,21 @@ function _loadFromFile() {
     fs.writeFileSync(FILE, JSON.stringify({}, null, 2));
   }
 
-  const data = JSON.parse(fs.readFileSync(FILE, "utf8"));
-  return data;
+  return JSON.parse(fs.readFileSync(FILE, "utf8"));
 }
 
+// 🔥 FIX: cache correto
 function loadDB() {
-  return _loadFromFile();
+  if (!global.dbCache) {
+    global.dbCache = _loadFromFile();
+  }
+  return global.dbCache;
 }
 
+// 🔥 FIX: save estável
 function saveDB(db) {
   global.dbCache = db;
-
   fs.writeFileSync(FILE, JSON.stringify(db, null, 2));
-
-  global.dbCache = JSON.parse(JSON.stringify(db));
 }
 
 // =========================
@@ -37,10 +37,7 @@ function saveDB(db) {
 function loadMarriages() {
   try {
     if (!fs.existsSync(MARRIAGES_FILE)) {
-      fs.writeFileSync(
-        MARRIAGES_FILE,
-        JSON.stringify({}, null, 2)
-      );
+      fs.writeFileSync(MARRIAGES_FILE, JSON.stringify({}, null, 2));
     }
 
     return JSON.parse(fs.readFileSync(MARRIAGES_FILE, "utf8"));
@@ -51,10 +48,7 @@ function loadMarriages() {
 }
 
 function saveMarriages(data) {
-  fs.writeFileSync(
-    MARRIAGES_FILE,
-    JSON.stringify(data, null, 2)
-  );
+  fs.writeFileSync(MARRIAGES_FILE, JSON.stringify(data, null, 2));
 }
 
 // =========================
@@ -73,6 +67,7 @@ function ensureUser(db, id, username = "Unknown", avatar = "") {
       inventory: [],
       cooldowns: {},
 
+      // 🔥 perfil visual
       background: null,
       bio: "",
       customAvatar: null
@@ -90,14 +85,13 @@ function ensureUser(db, id, username = "Unknown", avatar = "") {
   if (typeof user.work !== "number") user.work = 0;
   if (typeof user.daily !== "number") user.daily = 0;
 
-  if (!user.background) user.background = null;
-  if (!user.bio) user.bio = "";
-  if (!user.customAvatar) user.customAvatar = null;
+  // 🔥 FIX: não sobrescrever dados existentes
+  if (user.background === undefined) user.background = null;
+  if (user.bio === undefined) user.bio = "";
+  if (user.customAvatar === undefined) user.customAvatar = null;
 
   return user;
 }
-
-  
 
 function getUser(id, username = "Unknown", avatar = "") {
   const db = loadDB();
@@ -131,10 +125,9 @@ function addCoins(id, amount) {
   const db = loadDB();
   const user = ensureUser(db, id);
 
-  const coins = toBig(user.coins);
-  user.coins = (coins + BigInt(amount)).toString();
-
+  user.coins = (toBig(user.coins) + BigInt(amount)).toString();
   saveDB(db);
+
   return user.coins;
 }
 
@@ -142,14 +135,13 @@ function removeCoins(id, amount) {
   const db = loadDB();
   const user = ensureUser(db, id);
 
-  const coins = toBig(user.coins);
   const value = BigInt(amount);
 
-  if (value <= 0n || coins < value) return false;
+  if (value <= 0n || toBig(user.coins) < value) return false;
 
-  user.coins = (coins - value).toString();
-
+  user.coins = (toBig(user.coins) - value).toString();
   saveDB(db);
+
   return true;
 }
 
@@ -161,14 +153,12 @@ function depositCoins(id, amount) {
   const db = loadDB();
   const user = ensureUser(db, id);
 
-  const coins = toBig(user.coins);
-  const bank = toBig(user.bank);
   const value = BigInt(amount);
 
-  if (value <= 0n || coins < value) return false;
+  if (value <= 0n || toBig(user.coins) < value) return false;
 
-  user.coins = (coins - value).toString();
-  user.bank = (bank + value).toString();
+  user.coins = (toBig(user.coins) - value).toString();
+  user.bank = (toBig(user.bank) + value).toString();
 
   saveDB(db);
   return true;
@@ -178,14 +168,12 @@ function withdrawCoins(id, amount) {
   const db = loadDB();
   const user = ensureUser(db, id);
 
-  const coins = toBig(user.coins);
-  const bank = toBig(user.bank);
   const value = BigInt(amount);
 
-  if (value <= 0n || bank < value) return false;
+  if (value <= 0n || toBig(user.bank) < value) return false;
 
-  user.bank = (bank - value).toString();
-  user.coins = (coins + value).toString();
+  user.bank = (toBig(user.bank) - value).toString();
+  user.coins = (toBig(user.coins) + value).toString();
 
   saveDB(db);
   return true;
@@ -201,14 +189,12 @@ function transferCoins(senderId, targetId, amount) {
   const sender = ensureUser(db, senderId);
   const target = ensureUser(db, targetId);
 
-  const senderCoins = toBig(sender.coins);
-  const targetCoins = toBig(target.coins);
   const value = BigInt(amount);
 
-  if (value <= 0n || senderCoins < value) return false;
+  if (value <= 0n || toBig(sender.coins) < value) return false;
 
-  sender.coins = (senderCoins - value).toString();
-  target.coins = (targetCoins + value).toString();
+  sender.coins = (toBig(sender.coins) - value).toString();
+  target.coins = (toBig(target.coins) + value).toString();
 
   saveDB(db);
   return true;
@@ -223,8 +209,8 @@ function addItem(id, item) {
   const user = ensureUser(db, id);
 
   user.inventory.push(item);
-
   saveDB(db);
+
   return true;
 }
 
@@ -245,21 +231,15 @@ function canUse(id, key, cooldown) {
 
   const now = Date.now();
 
-  if (!user.cooldowns[key]) {
-    user.cooldowns[key] = 0;
-  }
+  if (!user.cooldowns[key]) user.cooldowns[key] = 0;
 
   const diff = now - user.cooldowns[key];
 
   if (diff < cooldown) {
-    return {
-      ok: false,
-      remaining: cooldown - diff
-    };
+    return { ok: false, remaining: cooldown - diff };
   }
 
   user.cooldowns[key] = now;
-
   saveDB(db);
 
   return { ok: true, remaining: 0 };
@@ -306,24 +286,7 @@ function getBalance(id) {
 
   const partner = ensureUser(db, marriage.partner);
 
-  const total =
-    toBig(user.coins) + toBig(partner.coins);
-
-  return total.toString();
-}
-
-// =========================
-// TEMPO
-// =========================
-
-function formatTime(ms) {
-  const sec = Math.floor(ms / 1000) % 60;
-  const min = Math.floor(ms / 60000) % 60;
-  const hour = Math.floor(ms / 3600000);
-
-  if (hour > 0) return `${hour}h ${min}m ${sec}s`;
-  if (min > 0) return `${min}m ${sec}s`;
-  return `${sec}s`;
+  return (toBig(user.coins) + toBig(partner.coins)).toString();
 }
 
 // =========================
@@ -347,7 +310,7 @@ module.exports = {
   hasItem,
 
   canUse,
-  formatTime,
+  toBig,
 
   marry,
   divorce,
