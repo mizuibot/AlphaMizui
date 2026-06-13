@@ -30,7 +30,7 @@ const ICONS = {
   bank: "https://static.vecteezy.com/system/resources/thumbnails/060/665/567/small/charming-chibi-bank-building-digital-art-transparent-background-playful-design-whimsical-style-free-png.png",
   coins: "https://cdn-icons-png.magnific.com/256/9382/9382185.png",
   love: "https://static.vecteezy.com/system/resources/thumbnails/015/658/513/small/isometric-love-heart-icon-png.png",
-  msg: "https://static.vecteezy.com/system/resources/thumbnails/012/708/647/small/calendar-icon-calendar-sign-and-symbol-in-line-style-icon-vector.jpg"
+  total: "https://static.vecteezy.com/system/resources/thumbnails/041/930/128/small/3d-money-bag-with-dollar-sign-and-coins-on-transparent-background-png.png"
 };
 
 async function getBuffer(url) {
@@ -51,7 +51,41 @@ module.exports = {
     const bank = BigInt(profile.bank || "0");
     const total = wallet + bank;
 
-    const bio = profile.bio || "Sem biografia.";
+    // =====================
+    // FORMATADOR BIGINT
+    // =====================
+    function formatMoney(value) {
+      const num = BigInt(value);
+
+      const units = [
+        { value: 1000000000000000000n, suffix: "Qi" },
+        { value: 1000000000000000n, suffix: "Qa" },
+        { value: 1000000000000n, suffix: "T" },
+        { value: 1000000000n, suffix: "B" },
+        { value: 1000000n, suffix: "M" },
+        { value: 1000n, suffix: "K" }
+      ];
+
+      for (const unit of units) {
+        if (num >= unit.value) {
+          const whole = num / unit.value;
+          const decimal = (num % unit.value) * 100n / unit.value;
+
+          return `${whole}.${decimal.toString().padStart(2, "0")}${unit.suffix}`;
+        }
+      }
+
+      return num.toString();
+    }
+
+    const walletText = formatMoney(wallet);
+    const bankText = formatMoney(bank);
+    const totalText = formatMoney(total);
+
+    const bio =
+  (profile.bio || "Sem biografia.").length > 60
+    ? (profile.bio || "Sem biografia.").slice(0, 57) + "..."
+    : profile.bio || "Sem biografia.";
 
     const background =
       profile.background ||
@@ -59,7 +93,11 @@ module.exports = {
 
     const avatar =
       profile.customAvatar ||
-      message.author.displayAvatarURL({ extension: "png", size: 512 });
+      message.author.displayAvatarURL({
+        extension: "png",
+        size: 512
+      });
+
 
     // =====================
     // STATS
@@ -77,7 +115,26 @@ module.exports = {
     // CASAMENTO
     // =====================
     const marriages = loadMarriages();
-    const married = marriages[userId]?.partner;
+const married = marriages[userId]?.partner;
+
+let marriedName = "Solteiro";
+
+if (married) {
+  try {
+    const user = await message.client.users.fetch(married);
+    marriedName = `Casado com: ${user.username}`;
+  } catch {
+    marriedName = "Casado";
+  }
+}
+   const discordDate = new Date(
+  message.author.createdTimestamp
+).toLocaleDateString("pt-BR");
+
+const serverDate = message.member?.joinedTimestamp
+  ? new Date(message.member.joinedTimestamp)
+      .toLocaleDateString("pt-BR")
+  : "Desconhecida";
 
     // =====================
     // IMAGENS
@@ -107,9 +164,9 @@ module.exports = {
     // ÍCONES (MAIORES)
     // =====================
     const coinIcon = (await getBuffer(ICONS.coins)).toString("base64");
-    const bankIcon = (await getBuffer(ICONS.bank)).toString("base64");
-    const loveIcon = (await getBuffer(ICONS.love)).toString("base64");
-    const msgIcon = (await getBuffer(ICONS.msg)).toString("base64");
+const bankIcon = (await getBuffer(ICONS.bank)).toString("base64");
+const loveIcon = (await getBuffer(ICONS.love)).toString("base64");
+const totalIcon = (await getBuffer(ICONS.total)).toString("base64");
 
     // =====================
     // SVG
@@ -117,43 +174,54 @@ module.exports = {
     const svg = `
 <svg width="900" height="500">
 
-  <image href="data:image/png;base64,${bgImage.toString("base64")}" width="900" height="500"/>
-  <rect width="900" height="500" fill="rgba(0,0,0,0.55)"/>
+<image href="data:image/png;base64,${bgImage.toString("base64")}" width="900" height="500"/>
+<rect width="900" height="500" fill="rgba(0,0,0,0.55)"/>
 
-  <image href="data:image/png;base64,${roundedAvatar.toString("base64")}" x="30" y="30" width="160" height="160"/>
+<image href="data:image/png;base64,${roundedAvatar.toString("base64")}" x="30" y="30" width="160" height="160"/>
 
-  <!-- COINS -->
-  <image href="data:image/png;base64,${coinIcon}" x="220" y="90" width="28" height="28"/>
-  <text x="260" y="110" fill="white" font-size="20">Coins: ${wallet}</text>
+<!-- COINS -->
+<image href="data:image/png;base64,${coinIcon}" x="220" y="90" width="30" height="30"/>
+<text x="264" y="112" fill="white" font-size="21">Coins: ${walletText}</text>
 
-  <!-- BANK -->
-  <image href="data:image/png;base64,${bankIcon}" x="220" y="140" width="28" height="28"/>
-  <text x="260" y="160" fill="white" font-size="20">Bank: ${bank}</text>
+<!-- BANK -->
+<image href="data:image/png;base64,${bankIcon}" x="220" y="145" width="30" height="30"/>
+<text x="264" y="167" fill="white" font-size="21">Bank: ${bankText}</text>
 
-  <!-- TOTAL -->
-  <image href="data:image/png;base64,${loveIcon}" x="220" y="190" width="28" height="28"/>
-  <text x="260" y="210" fill="white" font-size="20">Total: ${total}</text>
+<!-- TOTAL -->
+<image href="data:image/png;base64,${totalIcon}" x="220" y="200" width="30" height="30"/>
 
-  <!-- MSG STATS (SEM CALENDÁRIO, TUDO AQUI) -->
-  <image href="data:image/png;base64,${msgIcon}" x="220" y="250" width="28" height="28"/>
+<text x="264" y="222" fill="white" font-size="21">
+  Total: ${totalText}
+</text>
 
-  <text x="260" y="270" fill="white" font-size="18">
-    Hoje: ${today} | Semana: ${week}
-  </text>
+<!-- MSG STATS -->
+<text x="220" y="287" fill="white" font-size="19">
+  Hoje: ${today} | Semana: ${week}
+</text>
 
-  <text x="260" y="295" fill="white" font-size="18">
-    Mês: ${month} | Ano: ${year}
-  </text>
+<text x="220" y="315" fill="white" font-size="19">
+  Mês: ${month} | Ano: ${year}
+</text>
 
-  <!-- BIO -->
-  <text x="30" y="240" fill="white" font-size="18">
-    Bio: ${bio}
-  </text>
+<!-- BIO -->
+<text x="30" y="255" fill="white" font-size="19">
+  Bio: ${bio}
+</text>
 
-  <!-- CASAMENTO -->
-  <text x="30" y="270" fill="white" font-size="18">
-    Status: ${married ? "Casado 💕" : "Solteiro 💔"}
-  </text>
+<text x="30" y="320" fill="white" font-size="19">
+  Discord: ${discordDate}
+</text>
+
+<text x="30" y="355" fill="white" font-size="19">
+  Servidor: ${serverDate}
+</text>
+
+<!-- CASAMENTO -->
+<image href="data:image/png;base64,${loveIcon}" x="30" y="270" width="30" height="30"/>
+
+<text x="75" y="292" fill="white" font-size="19">
+  ${marriedName}
+</text>
 
 </svg>
 `;
