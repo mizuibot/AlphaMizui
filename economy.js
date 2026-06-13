@@ -1,7 +1,7 @@
 const fs = require("fs");
 const path = require("path");
 
-const FILE = path.join(__dirname, "profiles.json");
+const FILE = path.join(__dirname, "economy.json");
 const MARRIAGES_FILE = path.join(__dirname, "marriages.json");
 
 // =========================
@@ -16,12 +16,8 @@ function _loadFromFile() {
   return JSON.parse(fs.readFileSync(FILE, "utf8"));
 }
 
-// 🔥 FIX: cache correto
 function loadDB() {
-  if (!global.dbCache) {
-    global.dbCache = _loadFromFile();
-  }
-  return global.dbCache;
+  return _loadFromFile();
 }
 
 // 🔥 FIX: save estável
@@ -86,9 +82,9 @@ function ensureUser(db, id, username = "Unknown", avatar = "") {
   if (typeof user.daily !== "number") user.daily = 0;
 
   // 🔥 FIX: não sobrescrever dados existentes
-  if (user.background === undefined) user.background = null;
-  if (user.bio === undefined) user.bio = "";
-  if (user.customAvatar === undefined) user.customAvatar = null;
+if (user.background == null) user.background = null;
+if (user.bio == null) user.bio = "";
+if (user.customAvatar == null) user.customAvatar = null;
 
   return user;
 }
@@ -101,7 +97,6 @@ function getUser(id, username = "Unknown", avatar = "") {
   user.username = username;
   user.avatar = avatar;
 
-  saveDB(db);
   return user;
 }
 
