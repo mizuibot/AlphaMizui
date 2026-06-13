@@ -1,6 +1,30 @@
 const { EmbedBuilder } = require("discord.js");
 const { loadDB, saveDB, getUser } = require("../../economy");
 
+function formatMoney(value) {
+  const num = BigInt(value);
+
+  const units = [
+    { value: 1000000000000000000n, suffix: "Qi" },
+    { value: 1000000000000000n, suffix: "Qa" },
+    { value: 1000000000000n, suffix: "T" },
+    { value: 1000000000n, suffix: "B" },
+    { value: 1000000n, suffix: "M" },
+    { value: 1000n, suffix: "K" }
+  ];
+
+  for (const unit of units) {
+    if (num >= unit.value) {
+      const whole = num / unit.value;
+      const decimal = (num % unit.value) * 100n / unit.value;
+
+      return `${whole}.${decimal.toString().padStart(2, "0")}${unit.suffix}`;
+    }
+  }
+
+  return num.toString();
+}
+
 module.exports = {
   name: "dep",
 
@@ -8,9 +32,11 @@ module.exports = {
 
     const jailedUntil = global.jail.get(message.author.id);
 
-if (jailedUntil && jailedUntil > Date.now()) {
-  return message.reply("🚨 Você está preso e não pode usar economia!");
-}
+    if (jailedUntil && jailedUntil > Date.now()) {
+      return message.reply(
+        "🚨 Você está preso e não pode usar economia!"
+      );
+    }
 
     const amount = args[0];
 
@@ -22,7 +48,7 @@ if (jailedUntil && jailedUntil > Date.now()) {
 
     const db = loadDB();
 
-    const user = getUser(
+    getUser(
       message.author.id,
       message.author.username,
       message.author.displayAvatarURL({
@@ -59,52 +85,3 @@ if (jailedUntil && jailedUntil > Date.now()) {
     }
 
     if (depositAmount > wallet) {
-      return message.reply(
-        "❌ Você não possui essa quantidade na carteira."
-      );
-    }
-
-    dbUser.coins =
-      (wallet - depositAmount).toString();
-
-    dbUser.bank =
-      (bank + depositAmount).toString();
-
-    saveDB(db);
-
-    const embed = new EmbedBuilder()
-      .setColor(
-  global.getEmbedColor(
-    message.guild.id
-  )
-)
-      .setTitle("🏦 Depósito Realizado")
-      .setThumbnail(
-        message.author.displayAvatarURL({
-          dynamic: true
-        })
-      )
-      .addFields(
-        {
-          name: "💸 Depositado",
-          value: `${depositAmount.toString()} MZCoins`,
-          inline: true
-        },
-        {
-          name: "👛 Carteira",
-          value: `${dbUser.coins} MZCoins`,
-          inline: true
-        },
-        {
-          name: "🏦 Banco",
-          value: `${dbUser.bank} MZCoins`,
-          inline: true
-        }
-      )
-      .setTimestamp();
-
-    return message.reply({
-      embeds: [embed]
-    });
-  }
-};
