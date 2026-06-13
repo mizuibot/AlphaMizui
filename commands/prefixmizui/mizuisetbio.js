@@ -4,27 +4,21 @@ module.exports = {
   name: "setbio",
 
   async execute(message, args) {
-    const db = loadDB();
+const db = loadDB();
 
-    const user = db[message.author.id];
+console.log("ANTES:", JSON.stringify(db, null, 2));
 
-    if (!user) {
-      return message.reply("❌ Perfil não encontrado.");
-    }
+const user = db[message.author.id];
 
-    const bio = args.join(" ").trim();
+if (!user) {
+  return message.reply("❌ Perfil não encontrado.");
+}
 
-    if (!bio) {
-      return message.reply("❌ Escreve uma bio. Ex: !setbio sou o melhor player");
-    }
+user.bio = bio;
 
-    if (bio.length > 120) {
-      return message.reply("❌ Bio muito grande (máx 120 caracteres).");
-    }
+console.log("DEPOIS:", JSON.stringify(db, null, 2));
 
-    user.bio = bio;
-
-    saveDB(db);
+saveDB(db);
 
     return message.reply("✅ Bio atualizada com sucesso!");
   }
