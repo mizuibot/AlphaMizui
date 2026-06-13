@@ -6,23 +6,19 @@ module.exports = {
   async execute(message, args) {
     const db = loadDB();
 
-    console.log("ANTES:", JSON.stringify(db, null, 2));
-
     const user = db[message.author.id];
 
     if (!user) {
       return message.reply("❌ Perfil não encontrado.");
     }
 
-    const bio = args.join(" ").trim(); // 🔥 FALTAVA ISSO
+    const bio = args.join(" ").trim();
 
     if (!bio) {
       return message.reply("❌ Escreve uma bio.");
     }
 
     user.bio = bio;
-
-    console.log("DEPOIS:", JSON.stringify(db, null, 2));
 
     saveDB(db);
 

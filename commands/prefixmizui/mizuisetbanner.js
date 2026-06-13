@@ -4,27 +4,21 @@ module.exports = {
   name: "setbanner",
 
   async execute(message, args) {
-
     const url = args[0];
 
     if (!url) {
-      return message.reply(
-        "❌ Use: `mizuisetbanner <link>`"
-      );
+      return message.reply("❌ Use: mizuisetbanner <link>");
     }
 
     const db = loadDB();
+    const user = db[message.author.id];
 
-    if (!db[message.author.id]) {
-      db[message.author.id] = {};
-    }
+    if (!user) return message.reply("❌ Perfil não encontrado.");
 
-    db[message.author.id].background = url;
+    user.background = url;
 
     saveDB(db);
 
-    return message.reply(
-      "✅ Banner salvo com sucesso."
-    );
+    return message.reply("✅ Banner salvo com sucesso.");
   }
 };

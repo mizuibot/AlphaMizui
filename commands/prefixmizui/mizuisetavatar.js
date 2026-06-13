@@ -4,27 +4,21 @@ module.exports = {
   name: "setavatar",
 
   async execute(message, args) {
-
     const url = args[0];
 
     if (!url) {
-      return message.reply(
-        "❌ Use: `mizuisetavatar <link>`"
-      );
+      return message.reply("❌ Use: mizuisetavatar <link>");
     }
 
     const db = loadDB();
+    const user = db[message.author.id];
 
-    if (!db[message.author.id]) {
-      db[message.author.id] = {};
-    }
+    if (!user) return message.reply("❌ Perfil não encontrado.");
 
-    db[message.author.id].customAvatar = url;
+    user.customAvatar = url;
 
     saveDB(db);
 
-    return message.reply(
-      "✅ Avatar salvo com sucesso."
-    );
+    return message.reply("✅ Avatar salvo com sucesso.");
   }
 };
