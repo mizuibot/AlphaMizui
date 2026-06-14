@@ -1,30 +1,57 @@
 const fs = require("fs");
+const path = require("path");
 
-const FILE = "./guild-economy.json";
+const FILE = path.resolve(__dirname, "guild-economy.json");
 
+// =========================
+// LOAD DB (SEGURADO)
+// =========================
 function loadDB() {
+  try {
+    if (!fs.existsSync(FILE)) {
+      fs.writeFileSync(
+        FILE,
+        JSON.stringify({ guilds: {} }, null, 2)
+      );
+      return { guilds: {} };
+    }
 
-  if (!fs.existsSync(FILE)) {
+    const raw = fs.readFileSync(FILE, "utf8");
+
+    if (!raw || !raw.trim()) {
+      return { guilds: {} };
+    }
+
+    const db = JSON.parse(raw);
+
+    if (!db.guilds) db.guilds = {};
+
+    return db;
+  } catch (err) {
+    console.log("❌ Erro ao carregar guild DB:", err);
+    return { guilds: {} };
+  }
+}
+
+// =========================
+// SAVE DB (SEGURADO)
+// =========================
+function saveDB(db) {
+  try {
+    if (!db || typeof db !== "object") return;
 
     fs.writeFileSync(
       FILE,
-      JSON.stringify({ guilds: {} }, null, 2)
+      JSON.stringify(db, null, 2)
     );
+  } catch (err) {
+    console.log("❌ Erro ao salvar guild DB:", err);
   }
-
-  return JSON.parse(
-    fs.readFileSync(FILE, "utf8")
-  );
 }
 
-function saveDB(db) {
-
-  fs.writeFileSync(
-    FILE,
-    JSON.stringify(db, null, 2)
-  );
-}
-
+// =========================
+// ENSURE USER
+// =========================
 function ensureUser(
   db,
   guildId,
@@ -32,16 +59,11 @@ function ensureUser(
   username = "Unknown",
   avatar = ""
 ) {
-
   if (!db.guilds[guildId]) {
-
-    db.guilds[guildId] = {
-      users: {}
-    };
+    db.guilds[guildId] = { users: {} };
   }
 
   if (!db.guilds[guildId].users[userId]) {
-
     db.guilds[guildId].users[userId] = {
       coins: 0,
       work: 0,
@@ -50,16 +72,18 @@ function ensureUser(
     };
   }
 
-  return db.guilds[guildId].users[userId];
+  const user = db.guilds[guildId].users[userId];
+
+  if (typeof user.coins !== "number") user.coins = 0;
+  if (typeof user.work !== "number") user.work = 0;
+
+  return user;
 }
 
-function getUser(
-  guildId,
-  userId,
-  username,
-  avatar
-) {
-
+// =========================
+// GET USER
+// =========================
+function getUser(guildId, userId, username, avatar) {
   const db = loadDB();
 
   const user = ensureUser(
@@ -75,14 +99,10 @@ function getUser(
   return user;
 }
 
-function addCoins(
-  guildId,
-  userId,
-  amount,
-  username,
-  avatar
-) {
-
+// =========================
+// ADD COINS
+// =========================
+function addCoins(guildId, userId, amount, username, avatar) {
   const db = loadDB();
 
   const user = ensureUser(
@@ -93,34 +113,31 @@ function addCoins(
     avatar
   );
 
-  user.coins += amount;
+  user.coins += Number(amount || 0);
 
   saveDB(db);
 }
 
-function removeCoins(
-  guildId,
-  userId,
-  amount
-) {
-
+// =========================
+// REMOVE COINS
+// =========================
+function removeCoins(guildId, userId, amount) {
   const db = loadDB();
 
-  const user = ensureUser(
-    db,
-    guildId,
-    userId
-  );
+  const user = ensureUser(db, guildId, userId);
 
-  user.coins -= amount;
+  const value = Number(amount || 0);
 
-  if (user.coins < 0) {
-    user.coins = 0;
-  }
+  user.coins -= value;
+
+  if (user.coins < 0) user.coins = 0;
 
   saveDB(db);
 }
 
+// =========================
+// EXPORTS
+// =========================
 module.exports = {
   getUser,
   addCoins,
