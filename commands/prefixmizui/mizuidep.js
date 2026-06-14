@@ -56,14 +56,14 @@ module.exports = {
       })
     );
 
-    if (!db.users[message.author.id]) {
-  db.users[message.author.id] = {
-    coins: "0",
-    bank: "0"
-  };
-}
+    const db = loadDB();
 
-const dbUser = db.users[message.author.id];
+const dbUser = ensureUser(
+  db,
+  message.author.id,
+  message.author.username,
+  message.author.displayAvatarURL({ extension: "png" })
+);
 
     const wallet = BigInt(dbUser.coins || 0);
     const bank = BigInt(dbUser.bank || 0);
