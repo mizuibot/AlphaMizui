@@ -1,5 +1,5 @@
 const { EmbedBuilder } = require("discord.js");
-const { loadDB, saveDB, getUser } = require("../../economy");
+const { loadDB, saveDB, ensureUser } = require("../../economy");
 
 function formatMoney(value) {
   const num = BigInt(value);
@@ -33,90 +33,57 @@ module.exports = {
     const jailedUntil = global.jail.get(message.author.id);
 
     if (jailedUntil && jailedUntil > Date.now()) {
-      return message.reply(
-        "🚨 Você está preso e não pode usar economia!"
-      );
+      return message.reply("🚨 Você está preso e não pode usar economia!");
     }
 
     const amount = args[0];
 
     if (!amount) {
-      return message.reply(
-        "❌ Use: `mizuidep <quantidade>` ou `mizuidep all`"
-      );
+      return message.reply("❌ Use: `mizuidep <quantidade>` ou `mizuidep all`");
     }
 
     const db = loadDB();
 
-    getUser(
+    const dbUser = ensureUser(
+      db,
       message.author.id,
       message.author.username,
-      message.author.displayAvatarURL({
-        dynamic: true
-      })
+      message.author.displayAvatarURL({ extension: "png" })
     );
 
-    const db = loadDB();
-
-const dbUser = ensureUser(
-  db,
-  message.author.id,
-  message.author.username,
-  message.author.displayAvatarURL({ extension: "png" })
-);
-
-    const wallet = BigInt(dbUser.coins || 0);
-    const bank = BigInt(dbUser.bank || 0);
+    const wallet = BigInt(dbUser.coins || "0");
+    const bank = BigInt(dbUser.bank || "0");
 
     let depositAmount;
 
     if (amount.toLowerCase() === "all") {
-
       depositAmount = wallet;
-
     } else {
 
       if (!/^\d+$/.test(amount)) {
-  return message.reply("❌ Digite apenas números ou 'all'.");
-}
+        return message.reply("❌ Digite apenas números ou 'all'.");
+      }
 
-depositAmount = BigInt(amount);
+      depositAmount = BigInt(amount);
 
       if (depositAmount <= 0n) {
-        return message.reply(
-          "❌ Digite uma quantidade válida."
-        );
+        return message.reply("❌ Digite uma quantidade válida.");
       }
     }
 
     if (depositAmount > wallet) {
-      return message.reply(
-        "❌ Você não possui essa quantidade na carteira."
-      );
+      return message.reply("❌ Você não possui essa quantidade na carteira.");
     }
 
-    dbUser.coins = (
-      wallet - depositAmount
-    ).toString();
-
-    dbUser.bank = (
-      bank + depositAmount
-    ).toString();
+    dbUser.coins = (wallet - depositAmount).toString();
+    dbUser.bank = (bank + depositAmount).toString();
 
     saveDB(db);
 
     const embed = new EmbedBuilder()
-      .setColor(
-        global.getEmbedColor(
-          message.guild.id
-        )
-      )
+      .setColor(global.getEmbedColor(message.guild.id))
       .setTitle("🏦 Depósito Realizado")
-      .setThumbnail(
-        message.author.displayAvatarURL({
-          dynamic: true
-        })
-      )
+      .setThumbnail(message.author.displayAvatarURL({ dynamic: true }))
       .addFields(
         {
           name: "💸 Depositado",
@@ -136,8 +103,6 @@ depositAmount = BigInt(amount);
       )
       .setTimestamp();
 
-    return message.reply({
-      embeds: [embed]
-    });
+    return message.reply({ embeds: [embed] });
   }
 };

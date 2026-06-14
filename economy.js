@@ -1,31 +1,38 @@
 const fs = require("fs");
 const path = require("path");
+
 let cache = null;
 
-const FILE = path.join(__dirname, "economy.json");
-const MARRIAGES_FILE = path.join(__dirname, "marriages.json");
+const FILE = path.resolve(__dirname, "economy.json");
+const MARRIAGES_FILE = path.resolve(__dirname, "marriages.json");
 
 // =========================
-// DB PRINCIPAL
+// LOAD DB (SEGURO)
 // =========================
-
 function _loadFromFile() {
   if (!fs.existsSync(FILE)) {
     fs.writeFileSync(FILE, JSON.stringify({}, null, 2));
   }
 
-  return JSON.parse(fs.readFileSync(FILE, "utf8"));
+  const raw = fs.readFileSync(FILE, "utf8");
+  if (!raw || !raw.trim()) return {};
+
+  try {
+    return JSON.parse(raw);
+  } catch (err) {
+    console.log("❌ Erro JSON economy:", err);
+    return {};
+  }
 }
 
 function loadDB() {
-  if (!cache) {
-    cache = _loadFromFile();
-  }
-
+  cache = _loadFromFile();
   return cache;
 }
 
-// 🔥 FIX: save estável
+// =========================
+// SAVE DB
+// =========================
 function saveDB(db) {
   try {
     if (!db || typeof db !== "object") return;
@@ -34,23 +41,25 @@ function saveDB(db) {
 
     fs.writeFileSync(FILE, JSON.stringify(db, null, 2));
   } catch (err) {
-    console.log("Erro ao salvar DB:", err);
+    console.log("❌ Erro ao salvar DB:", err);
   }
 }
 
 // =========================
-// CASAMENTO DB
+// MARIAGE DB
 // =========================
-
 function loadMarriages() {
   try {
     if (!fs.existsSync(MARRIAGES_FILE)) {
       fs.writeFileSync(MARRIAGES_FILE, JSON.stringify({}, null, 2));
     }
 
-    return JSON.parse(fs.readFileSync(MARRIAGES_FILE, "utf8"));
+    const raw = fs.readFileSync(MARRIAGES_FILE, "utf8");
+    if (!raw || !raw.trim()) return {};
+
+    return JSON.parse(raw);
   } catch (err) {
-    console.log("Erro marriages:", err);
+    console.log("❌ Erro marriages:", err);
     return {};
   }
 }
@@ -60,9 +69,8 @@ function saveMarriages(data) {
 }
 
 // =========================
-// USER
+// ENSURE USER
 // =========================
-
 function ensureUser(db, id, username = "Unknown", avatar = "") {
   if (!db[id]) {
     db[id] = {
@@ -75,13 +83,11 @@ function ensureUser(db, id, username = "Unknown", avatar = "") {
       inventory: [],
       cooldowns: {},
 
-      // perfil visual
       background: null,
       bio: "",
       customAvatar: null
     };
 
-    // 🔥 AQUI: salva no arquivo na hora que cria o usuário
     saveDB(db);
   }
 
@@ -106,7 +112,6 @@ function ensureUser(db, id, username = "Unknown", avatar = "") {
 // =========================
 // BIGINT HELP
 // =========================
-
 function toBig(n) {
   try {
     return BigInt(n || "0");
@@ -118,7 +123,6 @@ function toBig(n) {
 // =========================
 // COINS
 // =========================
-
 function addCoins(id, amount) {
   const db = loadDB();
   const user = ensureUser(db, id);
@@ -146,7 +150,6 @@ function removeCoins(id, amount) {
 // =========================
 // BANCO
 // =========================
-
 function depositCoins(id, amount) {
   const db = loadDB();
   const user = ensureUser(db, id);
@@ -178,9 +181,8 @@ function withdrawCoins(id, amount) {
 }
 
 // =========================
-// TRANSFERÊNCIA
+// TRANSFER
 // =========================
-
 function transferCoins(senderId, targetId, amount) {
   const db = loadDB();
 
@@ -199,9 +201,8 @@ function transferCoins(senderId, targetId, amount) {
 }
 
 // =========================
-// INVENTÁRIO
+// INVENTORY
 // =========================
-
 function addItem(id, item) {
   const db = loadDB();
   const user = ensureUser(db, id);
@@ -222,7 +223,6 @@ function hasItem(id, item) {
 // =========================
 // COOLDOWN
 // =========================
-
 function canUse(id, key, cooldown) {
   const db = loadDB();
   const user = ensureUser(db, id);
@@ -246,7 +246,6 @@ function canUse(id, key, cooldown) {
 // =========================
 // CASAMENTO
 // =========================
-
 function marry(userA, userB) {
   const marriages = loadMarriages();
 
@@ -271,6 +270,9 @@ function divorce(userId) {
   return true;
 }
 
+// =========================
+// BALANCE
+// =========================
 function getBalance(id) {
   const db = loadDB();
   const user = ensureUser(db, id);
@@ -290,18 +292,16 @@ function getBalance(id) {
 // =========================
 // EXPORTS
 // =========================
-
 module.exports = {
   loadDB,
   saveDB,
-  getUser,
+  ensureUser,
 
   addCoins,
   removeCoins,
 
   depositCoins,
   withdrawCoins,
-
   transferCoins,
 
   addItem,
