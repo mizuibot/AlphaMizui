@@ -1,5 +1,6 @@
 const fs = require("fs");
 const path = require("path");
+let cache = null;
 
 const FILE = path.join(__dirname, "economy.json");
 const MARRIAGES_FILE = path.join(__dirname, "marriages.json");
@@ -17,13 +18,24 @@ function _loadFromFile() {
 }
 
 function loadDB() {
-  return _loadFromFile();
+  if (!cache) {
+    cache = _loadFromFile();
+  }
+
+  return cache;
 }
 
 // 🔥 FIX: save estável
 function saveDB(db) {
-  global.dbCache = db;
-  fs.writeFileSync(FILE, JSON.stringify(db, null, 2));
+  try {
+    if (!db || typeof db !== "object") return;
+
+    cache = db;
+
+    fs.writeFileSync(FILE, JSON.stringify(db, null, 2));
+  } catch (err) {
+    console.log("Erro ao salvar DB:", err);
+  }
 }
 
 // =========================
@@ -63,11 +75,14 @@ function ensureUser(db, id, username = "Unknown", avatar = "") {
       inventory: [],
       cooldowns: {},
 
-      // 🔥 perfil visual
+      // perfil visual
       background: null,
       bio: "",
       customAvatar: null
     };
+
+    // 🔥 AQUI: salva no arquivo na hora que cria o usuário
+    saveDB(db);
   }
 
   const user = db[id];
@@ -81,21 +96,9 @@ function ensureUser(db, id, username = "Unknown", avatar = "") {
   if (typeof user.work !== "number") user.work = 0;
   if (typeof user.daily !== "number") user.daily = 0;
 
-  // 🔥 FIX: não sobrescrever dados existentes
-if (user.background == null) user.background = null;
-if (user.bio == null) user.bio = "";
-if (user.customAvatar == null) user.customAvatar = null;
-
-  return user;
-}
-
-function getUser(id, username = "Unknown", avatar = "") {
-  const db = loadDB();
-
-  const user = ensureUser(db, id, username, avatar);
-
-  user.username = username;
-  user.avatar = avatar;
+  if (user.background == null) user.background = null;
+  if (user.bio == null) user.bio = "";
+  if (user.customAvatar == null) user.customAvatar = null;
 
   return user;
 }

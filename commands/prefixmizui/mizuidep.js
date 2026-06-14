@@ -56,7 +56,14 @@ module.exports = {
       })
     );
 
-    const dbUser = db.users[message.author.id];
+    if (!db.users[message.author.id]) {
+  db.users[message.author.id] = {
+    coins: "0",
+    bank: "0"
+  };
+}
+
+const dbUser = db.users[message.author.id];
 
     const wallet = BigInt(dbUser.coins || 0);
     const bank = BigInt(dbUser.bank || 0);
@@ -69,13 +76,11 @@ module.exports = {
 
     } else {
 
-      try {
-        depositAmount = BigInt(amount);
-      } catch {
-        return message.reply(
-          "❌ Digite uma quantidade válida."
-        );
-      }
+      if (!/^\d+$/.test(amount)) {
+  return message.reply("❌ Digite apenas números ou 'all'.");
+}
+
+depositAmount = BigInt(amount);
 
       if (depositAmount <= 0n) {
         return message.reply(
