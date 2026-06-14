@@ -109,6 +109,12 @@ function ensureUser(db, id, username = "Unknown", avatar = "") {
   return user;
 }
 
+
+function getUser(id, username = "Unknown", avatar = "") {
+  const db = loadDB();
+  return ensureUser(db, id, username, avatar);
+}
+
 // =========================
 // BIGINT HELP
 // =========================
@@ -295,6 +301,7 @@ function getBalance(id) {
 module.exports = {
   loadDB,
   saveDB,
+  getUser,
   ensureUser,
 
   addCoins,
