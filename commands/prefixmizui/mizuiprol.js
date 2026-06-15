@@ -176,7 +176,7 @@ const totalIcon = (await getBuffer(ICONS.total)).toString("base64");
 
 <defs>
   <style>
-    text { font-family: sans-serif; }
+    text { font-family: Arial, DejaVu Sans, sans-serif; }
   </style>
 </defs>
 
