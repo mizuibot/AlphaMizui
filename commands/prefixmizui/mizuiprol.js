@@ -171,6 +171,14 @@ const totalIcon = (await getBuffer(ICONS.total)).toString("base64");
     // =====================
     // SVG
     // =====================
+
+const esc = (v) =>
+  String(v ?? "")
+    .replace(/&/g, "&amp;")
+    .replace(/</g, "&lt;")
+    .replace(/>/g, "&gt;")
+    .replace(/\n/g, " ");
+
     const svg = `
 <svg width="900" height="500">
 
@@ -191,18 +199,18 @@ const totalIcon = (await getBuffer(ICONS.total)).toString("base64");
 <!-- COINS -->
 <image href="data:image/png;base64,${coinIcon}" x="220" y="90" width="30" height="30"/>
 <text x="264" y="112" fill="white" font-size="21">
-Coins: ${walletText}
+Coins: ${esc(walletText)}
 </text>
 
 <!-- BANK -->
 <image href="data:image/png;base64,${bankIcon}" x="220" y="145" width="30" height="30"/>
-<text x="264" y="167" fill="white" font-size="21">Bank: ${bankText}</text>
+<text x="264" y="167" fill="white" font-size="21">Bank: ${esc(bankText)}</text>
 
 <!-- TOTAL -->
 <image href="data:image/png;base64,${totalIcon}" x="220" y="200" width="30" height="30"/>
 
 <text x="264" y="222" fill="white" font-size="21">
-  Total: ${totalText}
+  Total: ${esc(totalText)}
 </text>
 
 <!-- MSG STATS -->
@@ -216,7 +224,7 @@ Coins: ${walletText}
 
 <!-- BIO -->
 <text x="30" y="255" fill="white" font-size="19">
-  Bio: ${bio}
+  Bio: ${esc(bio)}
 </text>
 
 <text x="30" y="320" fill="white" font-size="19">
@@ -231,7 +239,7 @@ Coins: ${walletText}
 <image href="data:image/png;base64,${loveIcon}" x="30" y="270" width="30" height="30"/>
 
 <text x="75" y="292" fill="white" font-size="19">
-  ${marriedName}
+  ${esc(marriedName)}
 </text>
 
 </svg>
