@@ -181,7 +181,9 @@ const totalIcon = (await getBuffer(ICONS.total)).toString("base64");
 
 <!-- COINS -->
 <image href="data:image/png;base64,${coinIcon}" x="220" y="90" width="30" height="30"/>
-<text x="264" y="112" fill="white" font-size="21">Coins: ${walletText}</text>
+<text x="264" y="112" fill="white" font-size="21">
+Coins: ${walletText}
+</text>
 
 <!-- BANK -->
 <image href="data:image/png;base64,${bankIcon}" x="220" y="145" width="30" height="30"/>
