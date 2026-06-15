@@ -174,6 +174,12 @@ const totalIcon = (await getBuffer(ICONS.total)).toString("base64");
     const svg = `
 <svg width="900" height="500">
 
+<defs>
+  <style>
+    text { font-family: sans-serif; }
+  </style>
+</defs>
+
 <image href="data:image/png;base64,${bgImage.toString("base64")}" width="900" height="500"/>
 <rect width="900" height="500" fill="rgba(0,0,0,0.55)"/>
 
