@@ -17,9 +17,9 @@ module.exports = {
     .setDescription("Pegue seu reward diário"),
 
   async execute(interaction) {
-
     const db = loadDB();
-    const user = db.users[interaction.user.id];
+
+    const user = db.users?.[interaction.user.id];
 
     if (!user) {
       return interaction.reply({
@@ -35,9 +35,8 @@ module.exports = {
     const now = Date.now();
     const cooldown = 24 * 60 * 60 * 1000;
 
-    if (now - user.daily < cooldown) {
-
-      const rest = cooldown - (now - user.daily);
+    if (now - (user.daily || 0) < cooldown) {
+      const rest = cooldown - (now - (user.daily || 0));
       const h = Math.floor(rest / 3600000);
       const m = Math.floor((rest % 3600000) / 60000);
 
@@ -55,9 +54,9 @@ module.exports = {
     const reward = 500;
 
     user.coins = (
-  BigInt(user.coins || 0) +
-  BigInt(reward)
-).toString();
+      BigInt(user.coins || "0") + BigInt(reward)
+    ).toString();
+
     user.daily = now;
 
     saveDB(db);
@@ -65,13 +64,11 @@ module.exports = {
     return interaction.reply({
       embeds: [
         new EmbedBuilder()
-          .setColor(
-  global.getEmbedColor(
-    interaction.guild.id
-  )
-)
+          .setColor(global.getEmbedColor(interaction.guild.id))
           .setTitle("💸 Daily coletado")
-          .setDescription(`Você recebeu **${reward} coins**!\n💰 Total: **${user.coins}**`)
+          .setDescription(
+            `Você recebeu **${reward} coins**!\n💰 Total: **${user.coins}**`
+          )
       ]
     });
   }

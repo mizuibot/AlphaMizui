@@ -7,16 +7,13 @@ module.exports = {
     .setDescription("Ranking do servidor (ou global se usado fora)"),
 
   async execute(interaction) {
-    const db = JSON.parse(
-      fs.readFileSync("./economy.json", "utf8")
-    );
-
+    const db = JSON.parse(fs.readFileSync("./economy.json", "utf8"));
     const usersDB = Object.entries(db.users || {});
 
     let users = [];
 
     // =========================
-    // 🏰 MODO SERVER
+    // 🏰 SERVER MODE
     // =========================
     if (interaction.guild) {
       const members = await interaction.guild.members.fetch();
@@ -24,22 +21,22 @@ module.exports = {
       users = usersDB
         .filter(([id]) => members.has(id))
         .sort((a, b) => {
-          const coinsA = BigInt(a[1].coins || "0");
-          const coinsB = BigInt(b[1].coins || "0");
-          return coinsB > coinsA ? 1 : -1;
+          const coinsA = BigInt(a[1]?.coins || "0");
+          const coinsB = BigInt(b[1]?.coins || "0");
+          return coinsB > coinsA ? -1 : 1;
         })
         .slice(0, 10);
     }
 
     // =========================
-    // 🌍 MODO GLOBAL (DM / apps)
+    // 🌍 GLOBAL MODE
     // =========================
     else {
       users = usersDB
         .sort((a, b) => {
-          const coinsA = BigInt(a[1].coins || "0");
-          const coinsB = BigInt(b[1].coins || "0");
-          return coinsB > coinsA ? 1 : -1;
+          const coinsA = BigInt(a[1]?.coins || "0");
+          const coinsB = BigInt(b[1]?.coins || "0");
+          return coinsB > coinsA ? -1 : 1;
         })
         .slice(0, 10);
     }
@@ -54,10 +51,10 @@ module.exports = {
     let ranking = "";
 
     users.forEach((user, index) => {
-      const coins = BigInt(user[1].coins || "0");
+      const coins = BigInt(user[1]?.coins || "0");
 
-      ranking += `**${index + 1}.** ${user[1].username || "Unknown"}\n`;
-      ranking += `💰 Coins: \`${Number(coins).toLocaleString("pt-BR")}\`\n\n`;
+      ranking += `**${index + 1}.** ${user[1]?.username || "Unknown"}\n`;
+      ranking += `💰 Coins: \`${coins.toString()}\`\n\n`;
     });
 
     const embed = new EmbedBuilder()
