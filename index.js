@@ -1210,6 +1210,9 @@ process.on("SIGTERM", () => {
   process.exit();
 });
 
+
+console.log("TOKEN LENGTH:", process.env.DISCORD_TOKEN?.length);
+console.log("TOKEN RAW:", JSON.stringify(process.env.DISCORD_TOKEN));
 client
   .login(process.env.DISCORD_TOKEN)
   .then(() => console.log("TOKEN OK"))
