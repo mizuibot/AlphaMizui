@@ -182,7 +182,7 @@ const esc = (v) =>
     .replace(/\n/g, " ");
 
 const svg = `
-<svg width="1300" height="650" xmlns="http://www.w3.org/2000/svg">
+<svg width="900" height="500" xmlns="http://www.w3.org/2000/svg">
 
 <defs>
   <style>
@@ -195,64 +195,66 @@ const svg = `
 
 <!-- BACKGROUND -->
 <image href="data:image/png;base64,${bgImage.toString("base64")}"
-  width="1300" height="650" />
+  width="900" height="500" />
 
 <!-- OVERLAY -->
-<rect width="1300" height="650" fill="rgba(0,0,0,0.55)"/>
+<rect width="900" height="500" fill="rgba(0,0,0,0.55)"/>
 
-<!-- AVATAR -->
+<!-- AVATAR (lado esquerdo centralizado verticalmente) -->
 <image href="data:image/png;base64,${roundedAvatar.toString("base64")}"
-  x="40" y="40" width="180" height="180"/>
+  x="40" y="160" width="160" height="160"/>
+
+<!-- BLOCO CENTRAL (ICONS + TEXTOS CENTRALIZADOS) -->
 
 <!-- COINS -->
 <image href="data:image/png;base64,${coinIcon}"
-  x="260" y="75" width="34" height="34"/>
-<text x="310" y="100" fill="white" font-size="28">
+  x="320" y="120" width="34" height="34"/>
+<text x="360" y="145" fill="white" font-size="26">
 Coins: ${esc(walletText)}
 </text>
 
 <!-- BANK -->
 <image href="data:image/png;base64,${bankIcon}"
-  x="260" y="135" width="34" height="34"/>
-<text x="310" y="160" fill="white" font-size="28">
+  x="320" y="180" width="34" height="34"/>
+<text x="360" y="205" fill="white" font-size="26">
 Bank: ${esc(bankText)}
 </text>
 
 <!-- TOTAL -->
 <image href="data:image/png;base64,${totalIcon}"
-  x="260" y="195" width="34" height="34"/>
-<text x="310" y="220" fill="white" font-size="28">
+  x="320" y="240" width="34" height="34"/>
+<text x="360" y="265" fill="white" font-size="26">
 Total: ${esc(totalText)}
 </text>
 
-<!-- STATS PRINCIPAL (MAIOR DESTAQUE) -->
-<text x="260" y="295" fill="white" font-size="24">
+<!-- STATS -->
+<text x="320" y="320" fill="white" font-size="22">
 Hoje: ${today} | Semana: ${week}
 </text>
 
-<text x="260" y="330" fill="white" font-size="24">
+<text x="320" y="350" fill="white" font-size="22">
 Mês: ${month} | Ano: ${year}
 </text>
 
-<!-- BIO -->
-<text x="40" y="270" fill="white" font-size="22">
+<!-- BIO (abaixo do avatar) -->
+<text x="40" y="360" fill="white" font-size="18">
 Bio: ${esc(bio)}
 </text>
 
 <!-- DATES -->
-<text x="40" y="310" fill="white" font-size="20">
+<text x="40" y="390" fill="white" font-size="16">
 Discord: ${discordDate}
 </text>
 
-<text x="40" y="340" fill="white" font-size="20">
+<text x="40" y="415" fill="white" font-size="16">
 Servidor: ${serverDate}
 </text>
 
 <!-- CASAMENTO -->
 <image href="data:image/png;base64,${loveIcon}"
-  x="40" y="380" width="32" height="32"/>
+  x="40" y="440" width="28" height="28"/>
 
-<text x="80" y="405" fill="white" font-size="22">
+<text x="75" y="460" fill="white" font-size="18">
 ${esc(marriedName)}
 </text>
 
