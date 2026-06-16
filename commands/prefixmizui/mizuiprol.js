@@ -181,8 +181,8 @@ const esc = (v) =>
     .replace(/>/g, "&gt;")
     .replace(/\n/g, " ");
 
-    const svg = `
-<svg width="900" height="500">
+const svg = `
+<svg width="1300" height="650" xmlns="http://www.w3.org/2000/svg">
 
 <defs>
   <style>
@@ -193,59 +193,72 @@ const esc = (v) =>
   </style>
 </defs>
 
-<image href="data:image/png;base64,${bgImage.toString("base64")}" width="900" height="500"/>
-<rect width="900" height="500" fill="rgba(0,0,0,0.55)"/>
+<!-- BACKGROUND -->
+<image href="data:image/png;base64,${bgImage.toString("base64")}"
+  width="1300" height="650" />
 
-<image href="data:image/png;base64,${roundedAvatar.toString("base64")}" x="30" y="30" width="160" height="160"/>
+<!-- OVERLAY -->
+<rect width="1300" height="650" fill="rgba(0,0,0,0.55)"/>
+
+<!-- AVATAR -->
+<image href="data:image/png;base64,${roundedAvatar.toString("base64")}"
+  x="40" y="40" width="180" height="180"/>
 
 <!-- COINS -->
-<image href="data:image/png;base64,${coinIcon}" x="220" y="90" width="30" height="30"/>
-<text x="264" y="112" fill="white" font-size="21">
+<image href="data:image/png;base64,${coinIcon}"
+  x="260" y="80" width="30" height="30"/>
+<text x="300" y="102" fill="white" font-size="22">
 Coins: ${esc(walletText)}
 </text>
 
 <!-- BANK -->
-<image href="data:image/png;base64,${bankIcon}" x="220" y="145" width="30" height="30"/>
-<text x="264" y="167" fill="white" font-size="21">Bank: ${esc(bankText)}</text>
+<image href="data:image/png;base64,${bankIcon}"
+  x="260" y="140" width="30" height="30"/>
+<text x="300" y="162" fill="white" font-size="22">
+Bank: ${esc(bankText)}
+</text>
 
 <!-- TOTAL -->
-<image href="data:image/png;base64,${totalIcon}" x="220" y="200" width="30" height="30"/>
-
-<text x="264" y="222" fill="white" font-size="21">
-  Total: ${esc(totalText)}
+<image href="data:image/png;base64,${totalIcon}"
+  x="260" y="200" width="30" height="30"/>
+<text x="300" y="222" fill="white" font-size="22">
+Total: ${esc(totalText)}
 </text>
 
-<!-- MSG STATS -->
-<text x="220" y="287" fill="white" font-size="19">
-  Hoje: ${today} | Semana: ${week}
+<!-- STATS -->
+<text x="260" y="300" fill="white" font-size="20">
+Hoje: ${today} | Semana: ${week}
 </text>
 
-<text x="220" y="315" fill="white" font-size="19">
-  Mês: ${month} | Ano: ${year}
+<text x="260" y="330" fill="white" font-size="20">
+Mês: ${month} | Ano: ${year}
 </text>
 
 <!-- BIO -->
-<text x="30" y="255" fill="white" font-size="19">
-  Bio: ${esc(bio)}
+<text x="40" y="260" fill="white" font-size="20">
+Bio: ${esc(bio)}
 </text>
 
-<text x="30" y="320" fill="white" font-size="19">
-  Discord: ${discordDate}
+<!-- DATES -->
+<text x="40" y="300" fill="white" font-size="18">
+Discord: ${discordDate}
 </text>
 
-<text x="30" y="355" fill="white" font-size="19">
-  Servidor: ${serverDate}
+<text x="40" y="330" fill="white" font-size="18">
+Servidor: ${serverDate}
 </text>
 
 <!-- CASAMENTO -->
-<image href="data:image/png;base64,${loveIcon}" x="30" y="270" width="30" height="30"/>
+<image href="data:image/png;base64,${loveIcon}"
+  x="40" y="360" width="30" height="30"/>
 
-<text x="75" y="292" fill="white" font-size="19">
-  ${esc(marriedName)}
+<text x="80" y="382" fill="white" font-size="20">
+${esc(marriedName)}
 </text>
 
 </svg>
 `;
+
 
     const image = await sharp(Buffer.from(svg))
       .png()
