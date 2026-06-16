@@ -33,15 +33,36 @@ function loadDB() {
 // =========================
 // SAVE DB
 // =========================
+let writing = false;
+let pendingSave = false;
+
 function saveDB(db) {
   try {
     if (!db || typeof db !== "object") return;
 
     cache = db;
 
-    fs.writeFileSync(FILE, JSON.stringify(db, null, 2));
+    if (writing) {
+      pendingSave = true;
+      return;
+    }
+
+    writeDB();
   } catch (err) {
     console.log("❌ Erro ao salvar DB:", err);
+  }
+}
+
+function writeDB() {
+  writing = true;
+
+  fs.writeFileSync(FILE, JSON.stringify(cache, null, 2));
+
+  writing = false;
+
+  if (pendingSave) {
+    pendingSave = false;
+    writeDB();
   }
 }
 
