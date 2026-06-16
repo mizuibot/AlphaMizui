@@ -4,78 +4,49 @@ const fs = require("fs");
 module.exports = {
   data: new SlashCommandBuilder()
     .setName("leaderboardlocal")
-    .setDescription("Ranking do servidor (ou global se usado fora)"),
+    .setDescription("Ranking de moedas do servidor"),
 
   async execute(interaction) {
-    const db = JSON.parse(fs.readFileSync("./economy.json", "utf8"));
-    const usersDB = Object.entries(db.users || {});
+    await interaction.deferReply();
 
-    let users = [];
+    let db;
 
-    // =========================
-    // 🏰 SERVER MODE
-    // =========================
-    if (interaction.guild) {
-      const members = await interaction.guild.members.fetch();
-
-      users = usersDB
-        .filter(([id]) => members.has(id))
-        .sort((a, b) => {
-          const coinsA = BigInt(a[1]?.coins || "0");
-          const coinsB = BigInt(b[1]?.coins || "0");
-          return coinsB > coinsA ? -1 : 1;
-        })
-        .slice(0, 10);
+    try {
+      db = JSON.parse(fs.readFileSync("./guild-economy.json", "utf8"));
+    } catch (err) {
+      return interaction.editReply("❌ Erro ao carregar banco de dados.");
     }
 
-    // =========================
-    // 🌍 GLOBAL MODE
-    // =========================
-    else {
-      users = usersDB
-        .sort((a, b) => {
-          const coinsA = BigInt(a[1]?.coins || "0");
-          const coinsB = BigInt(b[1]?.coins || "0");
-          return coinsB > coinsA ? -1 : 1;
-        })
-        .slice(0, 10);
+    const guildId = interaction.guild.id;
+
+    const guildData = db.guilds?.[guildId]?.users;
+
+    if (!guildData || Object.keys(guildData).length === 0) {
+      return interaction.editReply("Ninguém possui moedas ainda neste servidor.");
     }
 
-    if (users.length === 0) {
-      return interaction.reply({
-        content: "Ninguém possui moedas ainda.",
-        ephemeral: true
-      });
-    }
+    const users = Object.entries(guildData)
+      .sort((a, b) => {
+        const coinsA = BigInt(a[1]?.coins || "0");
+        const coinsB = BigInt(b[1]?.coins || "0");
+        return coinsB > coinsA ? -1 : 1;
+      })
+      .slice(0, 10);
 
     let ranking = "";
 
     users.forEach((user, index) => {
-      const coins = BigInt(user[1]?.coins || "0");
-
-      ranking += `**${index + 1}.** ${user[1]?.username || "Unknown"}\n`;
-      ranking += `💰 Coins: \`${coins.toString()}\`\n\n`;
+      ranking += `**${index + 1}.** ${user[1]?.username || "Desconhecido"}\n`;
+      ranking += `💰 Coins: \`${user[1]?.coins || "0"}\`\n\n`;
     });
 
     const embed = new EmbedBuilder()
-      .setTitle(
-        interaction.guild
-          ? `🏰 Leaderboard • ${interaction.guild.name}`
-          : "🌍 Leaderboard Global"
-      )
+      .setTitle(`🏰 Leaderboard • ${interaction.guild.name}`)
       .setDescription(ranking)
-      .setColor(
-        interaction.guild
-          ? global.getEmbedColor(interaction.guild.id)
-          : "#9370DB"
-      )
-      .setFooter({
-        text: `Top ${users.length} membros`
-      })
+      .setColor(global.getEmbedColor(interaction.guild.id))
+      .setFooter({ text: `Top ${users.length} membros` })
       .setTimestamp();
 
-    return interaction.reply({
-      embeds: [embed]
-    });
+    return interaction.editReply({ embeds: [embed] });
   }
 };
