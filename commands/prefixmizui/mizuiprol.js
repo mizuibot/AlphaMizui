@@ -188,7 +188,7 @@ const svg = `
   <style>
     text {
       font-family: Arial, sans-serif;
-      font-weight: 400;
+      font-weight: 600;
     }
   </style>
 </defs>
@@ -206,53 +206,53 @@ const svg = `
 
 <!-- COINS -->
 <image href="data:image/png;base64,${coinIcon}"
-  x="260" y="80" width="30" height="30"/>
-<text x="300" y="102" fill="white" font-size="22">
+  x="260" y="75" width="34" height="34"/>
+<text x="310" y="100" fill="white" font-size="28">
 Coins: ${esc(walletText)}
 </text>
 
 <!-- BANK -->
 <image href="data:image/png;base64,${bankIcon}"
-  x="260" y="140" width="30" height="30"/>
-<text x="300" y="162" fill="white" font-size="22">
+  x="260" y="135" width="34" height="34"/>
+<text x="310" y="160" fill="white" font-size="28">
 Bank: ${esc(bankText)}
 </text>
 
 <!-- TOTAL -->
 <image href="data:image/png;base64,${totalIcon}"
-  x="260" y="200" width="30" height="30"/>
-<text x="300" y="222" fill="white" font-size="22">
+  x="260" y="195" width="34" height="34"/>
+<text x="310" y="220" fill="white" font-size="28">
 Total: ${esc(totalText)}
 </text>
 
-<!-- STATS -->
-<text x="260" y="300" fill="white" font-size="20">
+<!-- STATS PRINCIPAL (MAIOR DESTAQUE) -->
+<text x="260" y="295" fill="white" font-size="24">
 Hoje: ${today} | Semana: ${week}
 </text>
 
-<text x="260" y="330" fill="white" font-size="20">
+<text x="260" y="330" fill="white" font-size="24">
 Mês: ${month} | Ano: ${year}
 </text>
 
 <!-- BIO -->
-<text x="40" y="260" fill="white" font-size="20">
+<text x="40" y="270" fill="white" font-size="22">
 Bio: ${esc(bio)}
 </text>
 
 <!-- DATES -->
-<text x="40" y="300" fill="white" font-size="18">
+<text x="40" y="310" fill="white" font-size="20">
 Discord: ${discordDate}
 </text>
 
-<text x="40" y="330" fill="white" font-size="18">
+<text x="40" y="340" fill="white" font-size="20">
 Servidor: ${serverDate}
 </text>
 
 <!-- CASAMENTO -->
 <image href="data:image/png;base64,${loveIcon}"
-  x="40" y="360" width="30" height="30"/>
+  x="40" y="380" width="32" height="32"/>
 
-<text x="80" y="382" fill="white" font-size="20">
+<text x="80" y="405" fill="white" font-size="22">
 ${esc(marriedName)}
 </text>
 
