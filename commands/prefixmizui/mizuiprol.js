@@ -115,7 +115,9 @@ module.exports = {
     // CASAMENTO
     // =====================
     const marriages = loadMarriages();
-const married = marriages[userId]?.partner;
+const married =
+  marriages[userId] &&
+  marriages[userId][0];
 
 let marriedName = "Solteiro";
 

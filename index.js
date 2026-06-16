@@ -1193,8 +1193,9 @@ client.on("ready", () => {
   client.user.setPresence({
   activities: [
     {
-      name: "My Little Pony",
-      type: 0
+      name: "Copa do Mundo ao vivo",
+      type: 1, // STREAMING
+      url: "https://twitch.tv/yourchannel"
     }
   ],
   status: "online"

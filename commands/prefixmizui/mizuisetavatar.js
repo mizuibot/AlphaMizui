@@ -28,7 +28,13 @@ module.exports = {
 
     user.customAvatar = url;
 
+console.log("ANTES:", db[message.author.id]);
+
     saveDB(db);
+
+console.log("DEPOIS:", loadDB()[message.author.id]);
+
+
 
     return message.reply("✅ Avatar salvo com sucesso!");
   }
