@@ -916,7 +916,7 @@ ${creatorRule}
 ${wifeMemory}
 ${wifeRule}
 ${familyRule}
-${brotherRule}
+${sisterRule}
 ${relationshipMemory}
 
 global.systemPromptCache = getSystemPrompt(getGuild(guildId));
