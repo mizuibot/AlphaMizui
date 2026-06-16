@@ -89,7 +89,7 @@ module.exports = {
 
     const background =
       profile.background ||
-      "https://i.imgur.com/3ZQ3Z9D.jpeg";
+      "https://i.imgur.com/UWqQSjT.jpeg";
 
     const avatar =
       profile.customAvatar ||
@@ -200,43 +200,41 @@ const svg = `
 <!-- OVERLAY -->
 <rect width="900" height="500" fill="rgba(0,0,0,0.55)"/>
 
-<!-- AVATAR (lado esquerdo centralizado verticalmente) -->
+<!-- AVATAR -->
 <image href="data:image/png;base64,${roundedAvatar.toString("base64")}"
   x="40" y="160" width="160" height="160"/>
 
-<!-- BLOCO CENTRAL (ICONS + TEXTOS CENTRALIZADOS) -->
-
-<!-- COINS -->
+<!-- COINS (SUBIU) -->
 <image href="data:image/png;base64,${coinIcon}"
-  x="320" y="120" width="34" height="34"/>
-<text x="360" y="145" fill="white" font-size="26">
+  x="320" y="95" width="34" height="34"/>
+<text x="360" y="120" fill="white" font-size="26">
 Coins: ${esc(walletText)}
 </text>
 
-<!-- BANK -->
+<!-- BANK (SUBIU) -->
 <image href="data:image/png;base64,${bankIcon}"
-  x="320" y="180" width="34" height="34"/>
-<text x="360" y="205" fill="white" font-size="26">
+  x="320" y="150" width="34" height="34"/>
+<text x="360" y="175" fill="white" font-size="26">
 Bank: ${esc(bankText)}
 </text>
 
-<!-- TOTAL -->
+<!-- TOTAL (ligeiramente ajustado pra não colar) -->
 <image href="data:image/png;base64,${totalIcon}"
-  x="320" y="240" width="34" height="34"/>
-<text x="360" y="265" fill="white" font-size="26">
+  x="320" y="205" width="34" height="34"/>
+<text x="360" y="230" fill="white" font-size="26">
 Total: ${esc(totalText)}
 </text>
 
-<!-- STATS -->
-<text x="320" y="320" fill="white" font-size="22">
+<!-- STATS (SUBIU) -->
+<text x="320" y="290" fill="white" font-size="22">
 Hoje: ${today} | Semana: ${week}
 </text>
 
-<text x="320" y="350" fill="white" font-size="22">
+<text x="320" y="320" fill="white" font-size="22">
 Mês: ${month} | Ano: ${year}
 </text>
 
-<!-- BIO (abaixo do avatar) -->
+<!-- BIO -->
 <text x="40" y="360" fill="white" font-size="18">
 Bio: ${esc(bio)}
 </text>
@@ -259,7 +257,7 @@ ${esc(marriedName)}
 </text>
 
 </svg>
-`;
+`; 
 
 
     const image = await sharp(Buffer.from(svg))
