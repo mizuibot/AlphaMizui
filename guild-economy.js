@@ -88,10 +88,15 @@ function addCoins(guildId, userId, amount, username, avatar) {
   const user = ensureUser(db, guildId, userId, username, avatar);
 
   console.log("GUILD:", guildId);
-console.log("USER:", userId);
-console.log("COINS ATUAL:", db.guilds?.[guildId]?.users?.[userId]);
+  console.log("USER:", userId);
+  console.log("ANTES:", user.coins);
 
-  user.coins = (BigInt(user.coins) + BigInt(amount || "0")).toString();
+  const current = BigInt(user.coins || "0");
+  const add = BigInt(amount || "0");
+
+  user.coins = (current + add).toString();
+
+  console.log("DEPOIS:", user.coins);
 
   saveDB(db);
 }

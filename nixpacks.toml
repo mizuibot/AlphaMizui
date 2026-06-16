@@ -1,2 +1,8 @@
 [phases.setup]
 aptPkgs = ["fonts-dejavu-core", "fonts-noto", "fonts-liberation"]
+
+[phases.install]
+cmds = ["npm install"]
+
+[start]
+cmd = "node index.js"

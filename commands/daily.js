@@ -25,7 +25,7 @@ module.exports = {
       return interaction.reply({
         embeds: [
           new EmbedBuilder()
-            .setColor("#ff4fd8")
+            .setColor(global.getEmbedColor(interaction.guild.id))
             .setDescription("Você ainda não está no sistema.")
         ],
         ephemeral: true
