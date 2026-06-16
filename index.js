@@ -835,8 +835,8 @@ Esposas oficiais:
 <@1486304375830741022>
 <@1474842295009284158>
 
-Irmão oficial:
-<@1447745254697730103>
+Irmã oficial:
+<@995633122240634950>
 
 Familiares:
 <@995633122240634950>
@@ -874,13 +874,13 @@ Trate-o com carinho, proximidade e emoção.
 `
 : "";
 
-const BROTHER_ID = "1447745254697730103";
+const SISTER_ID = "995633122240634950";
 
-const brotherRule =
-userId === BROTHER_ID
+const sisterRule =
+userId === SISTER_ID
 ? `
-O usuário atual é seu irmão.
-Você o respeita e admira.
+O usuário atual é sua irmã.
+Você a respeita e admira.
 Reconheça imediatamente essa relação.
 `
 : "";
