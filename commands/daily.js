@@ -4,7 +4,11 @@ const fs = require("fs");
 const FILE = "./economy.json";
 
 function loadDB() {
-  return JSON.parse(fs.readFileSync(FILE, "utf8"));
+  try {
+    return JSON.parse(fs.readFileSync(FILE, "utf8"));
+  } catch {
+    return {};
+  }
 }
 
 function saveDB(db) {
@@ -19,7 +23,7 @@ module.exports = {
   async execute(interaction) {
     const db = loadDB();
 
-    const user = db.users?.[interaction.user.id];
+    const user = db[interaction.user.id];
 
     if (!user) {
       return interaction.reply({
@@ -37,13 +41,14 @@ module.exports = {
 
     if (now - (user.daily || 0) < cooldown) {
       const rest = cooldown - (now - (user.daily || 0));
+
       const h = Math.floor(rest / 3600000);
       const m = Math.floor((rest % 3600000) / 60000);
 
       return interaction.reply({
         embeds: [
           new EmbedBuilder()
-            .setColor("#ff4fd8")
+            .setColor(global.getEmbedColor(interaction.guild.id))
             .setTitle("⏳ Daily em cooldown")
             .setDescription(`Volte em **${h}h ${m}m**`)
         ],
@@ -54,7 +59,8 @@ module.exports = {
     const reward = 500;
 
     user.coins = (
-      BigInt(user.coins || "0") + BigInt(reward)
+      BigInt(user.coins || "0") +
+      BigInt(reward)
     ).toString();
 
     user.daily = now;
