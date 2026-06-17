@@ -5,7 +5,15 @@ console.log("📁 RODANDO EM:", __dirname);
 
 const fs = require("fs");
 const path = require("path");
+const db = require("./database");
 
+db.query("SELECT NOW()", (err, res) => {
+  if (err) {
+    console.log("Erro no banco:", err);
+  } else {
+    console.log("Banco conectado:", res.rows);
+  }
+});
 
 const EMBED_COLOR_FILE = path.join(
   __dirname,
