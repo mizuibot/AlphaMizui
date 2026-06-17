@@ -18,7 +18,7 @@ module.exports = {
     }
 
     const allUsers = Object.values(db.guilds || {})
-      .flatMap(guild => Object.entries(guild.users || {}));
+      .flatMap(guild => const users = Object.entries(db || {})
 
     if (allUsers.length === 0) {
       return interaction.editReply("Ninguém possui moedas ainda.");
