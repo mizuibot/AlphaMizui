@@ -30,6 +30,8 @@ module.exports = {
 
     saveDB(db);
 
+    console.log("SALVO:", loadDB()[message.author.id]);
+
     return message.reply("✅ Bio atualizada com sucesso!");
   }
 };
