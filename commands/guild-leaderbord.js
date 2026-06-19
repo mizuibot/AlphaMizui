@@ -11,37 +11,45 @@ module.exports = {
 
     let db;
 
+    // =========================
+    // LOAD DB
+    // =========================
     try {
-      db = JSON.parse(
-        fs.readFileSync("./economy.json", "utf8")
-      );
+      db = JSON.parse(fs.readFileSync("./economy.json", "utf8") || "{}");
     } catch (err) {
       console.log(err);
-      return interaction.editReply(
-        "❌ Erro ao carregar banco de dados."
-      );
+      return interaction.editReply("❌ Erro ao carregar banco de dados.");
     }
 
-    const members = await interaction.guild.members.fetch();
+    // =========================
+    // ⚠️ FIX PRINCIPAL (SEM FETCH PESADO)
+    // =========================
+    const members = interaction.guild.members.cache;
 
+    // =========================
+    // FILTER + SORT
+    // =========================
     const users = Object.entries(db)
       .filter(([id]) => members.has(id))
       .sort((a, b) => {
-        const coinsA = BigInt(a[1]?.coins || "0");
-        const coinsB = BigInt(b[1]?.coins || "0");
-
-        if (coinsB > coinsA) return 1;
-        if (coinsB < coinsA) return -1;
-        return 0;
+        const coinsA = Number(a[1]?.coins || 0);
+        const coinsB = Number(b[1]?.coins || 0);
+        return coinsB - coinsA;
       })
       .slice(0, 10);
 
+    // =========================
+    // EMPTY CHECK
+    // =========================
     if (!users.length) {
       return interaction.editReply(
         "Ninguém possui moedas ainda neste servidor."
       );
     }
 
+    // =========================
+    // BUILD RANKING
+    // =========================
     let ranking = "";
 
     users.forEach((user, index) => {
@@ -49,17 +57,18 @@ module.exports = {
       ranking += `💰 Coins: \`${user[1]?.coins || "0"}\`\n\n`;
     });
 
+    // =========================
+    // EMBED
+    // =========================
     const embed = new EmbedBuilder()
       .setTitle(`🏰 Leaderboard • ${interaction.guild.name}`)
       .setDescription(ranking)
-      .setColor(global.getEmbedColor(interaction.guild.id))
+      .setColor(global.getEmbedColor?.(interaction.guild.id) || 0x00AE86)
       .setFooter({
         text: `Top ${users.length} membros`
       })
       .setTimestamp();
 
-    return interaction.editReply({
-      embeds: [embed]
-    });
+    return interaction.editReply({ embeds: [embed] });
   }
 };
