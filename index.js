@@ -640,8 +640,6 @@ if (message.reference?.messageId) {
   } catch {}
 }
 
-const prefix = global.getPrefix(message.guild.id);
-
 // ignora bots
 if (message.author.bot) return;
 
