@@ -458,13 +458,6 @@ client.on("messageCreate", async (message) => {
   if (message.author.bot) return;
   if (blacklist.has(message.author.id)) return;
 
-  xpSystem.addXP(
-  message.author.id,
-  Math.floor(
-    Math.random() * 11
-  ) + 10
-);
-
   const jailedUntil = global.jail.get(message.author.id);
 
 if (jailedUntil && jailedUntil > Date.now()) {
@@ -478,8 +471,12 @@ if (jailedUntil && jailedUntil > Date.now()) {
     `⛓️ Você está preso!\n⏳ Tempo restante: **${min}m ${sec}s**\n💸 Fiança: **345.000 mzcoins**`
   );
 }
-  
-  
+
+try {
+  xpSystem.addXP(message.author.id, Math.floor(Math.random() * 11) + 10);
+} catch (err) {
+  console.error("XP ERROR:", err);
+}
 
   // ===== AFK =====
 
