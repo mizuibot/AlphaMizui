@@ -478,6 +478,8 @@ try {
   console.error("XP ERROR:", err);
 }
 
+console.log("PASSOU DO XP");
+ 
   // ===== AFK =====
 
     const AFK_FILE = path.join(__dirname, "afk.json");
@@ -597,6 +599,8 @@ try {
 
   const user = message.author;
   addMessage(guildId, user.id);
+
+console.log("PASSOU DO ADDMESSAGE");
 
   // GLOBAL
   getUser(
