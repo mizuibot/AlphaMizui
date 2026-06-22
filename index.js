@@ -5,15 +5,8 @@ console.log("📁 RODANDO EM:", __dirname);
 
 const fs = require("fs");
 const path = require("path");
-const db = require("./database");
-
-db.query("SELECT NOW()", (err, res) => {
-  if (err) {
-    console.log("Erro no banco:", err);
-  } else {
-    console.log("Banco conectado:", res.rows);
-  }
-});
+const xpSystem =
+require("./commands/prefixmizui/xpsystem");
 
 const EMBED_COLOR_FILE = path.join(
   __dirname,
@@ -464,6 +457,14 @@ client.on("messageCreate", async (message) => {
   if (!message.guild) return;
   if (message.author.bot) return;
   if (blacklist.has(message.author.id)) return;
+
+  xpSystem.addXP(
+  message.author.id,
+  Math.floor(
+    Math.random() * 11
+  ) + 10
+);
+
   const jailedUntil = global.jail.get(message.author.id);
 
 if (jailedUntil && jailedUntil > Date.now()) {
@@ -639,88 +640,56 @@ if (message.reference?.messageId) {
   } catch {}
 }
 
+const prefix = global.getPrefix(message.guild.id);
 
-  
+// ignora bots
+if (message.author.bot) return;
 
-  const content = rawContent.toLowerCase();
+const raw = rawContent;
 
+// =========================
+// PREFIX CHECK
+// =========================
+if (!raw.toLowerCase().startsWith(prefix.toLowerCase())) return;
 
-let args = [];
-let cmd = null;
-
-if (
-  rawContent
-    .toLowerCase()
-    .startsWith(
-      prefix.toLowerCase()
-    )
-) {
 console.log("RAW:", rawContent);
 console.log("PREFIX:", prefix);
-console.log("CMD:", cmd);
+
+// =========================
+// PARSE COMMAND
+// =========================
+const withoutPrefix = rawContent.slice(prefix.length).trim();
+
+console.log("SEM PREFIXO:", withoutPrefix);
+
+const args = withoutPrefix.split(/ +/);
+
+console.log("ARGS:", args);
+
+const cmd = args.shift()?.toLowerCase();
+
+console.log("CMD FINAL:", cmd);
+
+if (!cmd) return;
+
 console.log("EXISTE?", client.commands.has(cmd));
-console.log("COMANDOS:", [...client.commands.keys()]);
 
+// =========================
+// EXECUTE COMMAND
+// =========================
+const command = client.commands.get(cmd);
 
-if (
-  rawContent
-    .toLowerCase()
-    .startsWith(
-      prefix.toLowerCase()
-    )
-) 
+if (!command) return;
 
-  console.log("PASSOU NO STARTSWITH");
-
-  const withoutPrefix =
-    rawContent.slice(
-      prefix.length
-    ).trim();
-
-  console.log("SEM PREFIXO:", withoutPrefix);
-
-  args =
-    withoutPrefix.split(/ +/);
-
-  console.log("ARGS:", args);
-
-  cmd =
-    args.shift()?.toLowerCase();
-
-  console.log("CMD FINAL:", cmd);
+try {
+  await command.execute(message, args, client);
+} catch (err) {
+  console.log("ERRO PREFIX:", err);
+  await safeReply(message, "❌ Erro ao executar comando.");
 }
-// COMANDOS PREFIXADOS
 
-if (
-  cmd &&
-  client.commands.has(cmd)
-) {
-  try {
+return;
 
-    const command =
-      client.commands.get(cmd);
-
-    await command.execute(
-      message,
-      args,
-      client
-    );
-
-  } catch (err) {
-
-    console.log(
-      "ERRO PREFIX:",
-      err
-    );
-
-    await safeReply(
-      message,
-      "❌ Erro ao executar comando."
-    );
-  }
-
-  return;
-}
 const isMention = message.mentions.has(client.user.id);
 
 const shouldRespond =
