@@ -696,6 +696,15 @@ const shouldRespond =
   isReplyToBot ||
   isMention;
 
+console.log(
+  "CALLED:",
+  isCalled,
+  "REPLY:",
+  isReplyToBot,
+  "MENTION:",
+  isMention
+);
+
 if (!shouldRespond) return;
 
 let imagePart = null;
