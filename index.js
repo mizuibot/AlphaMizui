@@ -1014,8 +1014,7 @@ finalResponse = finalResponse.replace(
 console.log("RESPOSTA FINAL:");
 console.log(finalResponse);
 
-await safeReply(
-  message,
+await message.reply(
   finalResponse.slice(0, 2000)
 );
 
@@ -1032,9 +1031,10 @@ userHistory.push({
 });
 if (userHistory.length > 20) {
   userHistory.splice(0, userHistory.length - 20);
-}
- } catch (err) {
-  console.log(err);
+} catch (err) {
+  console.log("ERRO IA COMPLETO:");
+  console.error(err);
+  console.error(err.stack);
 
   const frases = [
     "Nossa. Você conseguiu quebrar minha paciência e a API ao mesmo tempo.",
