@@ -1087,15 +1087,27 @@ for (const file of slashFiles) {
 
 const prefixPath = path.join(__dirname, "commands", "prefixmizui");
 
-const prefixFiles = fs
-  .readdirSync(prefixPath)
-  .filter(file => file.endsWith(".js"));
+function getAllJsFiles(dir) {
+  let files = [];
+
+  for (const item of fs.readdirSync(dir)) {
+    const fullPath = path.join(dir, item);
+
+    if (fs.statSync(fullPath).isDirectory()) {
+      files.push(...getAllJsFiles(fullPath));
+    } else if (item.endsWith(".js")) {
+      files.push(fullPath);
+    }
+  }
+
+  return files;
+}
+
+const prefixFiles = getAllJsFiles(prefixPath);
 
 for (const file of prefixFiles) {
 
-  const command = require(
-    path.join(prefixPath, file)
-  );
+  const command = require(file);
 
   client.commands.set(
     command.name,
