@@ -678,16 +678,16 @@ console.log("EXISTE?", client.commands.has(cmd));
 // =========================
 const command = client.commands.get(cmd);
 
-if (!command) return;
+if (command) {
+  try {
+    await command.execute(message, args, client);
+  } catch (err) {
+    console.log("ERRO PREFIX:", err);
+    await safeReply(message, "❌ Erro ao executar comando.");
+  }
 
-try {
-  await command.execute(message, args, client);
-} catch (err) {
-  console.log("ERRO PREFIX:", err);
-  await safeReply(message, "❌ Erro ao executar comando.");
+  return;
 }
-
-return;
 
 const isMention = message.mentions.has(client.user.id);
 
