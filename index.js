@@ -649,7 +649,7 @@ const raw = rawContent;
 // =========================
 // PREFIX CHECK
 // =========================
-if (!raw.toLowerCase().startsWith(prefix.toLowerCase())) return;
+// if (!raw.toLowerCase().startsWith(prefix.toLowerCase())) return;
 
 console.log("RAW:", rawContent);
 console.log("PREFIX:", prefix);
