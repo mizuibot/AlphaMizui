@@ -1031,10 +1031,13 @@ userHistory.push({
 });
 if (userHistory.length > 20) {
   userHistory.splice(0, userHistory.length - 20);
+}
+
 } catch (err) {
   console.log("ERRO IA COMPLETO:");
   console.error(err);
   console.error(err.stack);
+
 
   const frases = [
     "Nossa. Você conseguiu quebrar minha paciência e a API ao mesmo tempo.",
