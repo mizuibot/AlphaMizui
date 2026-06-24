@@ -1118,17 +1118,26 @@ const prefixFiles = getAllJsFiles(prefixPath);
 
 for (const file of prefixFiles) {
 
-  const command = require(file);
+const command = require(file);
 
-  client.commands.set(
-    command.name,
-    command
-  );
+console.log(
+  "ARQUIVO:",
+  file
+);
 
-  console.log(
-    `✅ Prefix carregado: ${command.name}`
-  );
-}
+console.log(
+  "NOME:",
+  command?.name
+);
+
+client.commands.set(
+  command.name,
+  command
+);
+
+console.log(
+  `✅ Prefix carregado: ${command.name}`
+);
 
 client.on("interactionCreate", async (interaction) => {
   if (!interaction.isChatInputCommand()) return;
@@ -1253,8 +1262,12 @@ setInterval(() => {
   );
 }, 30000);
 
+console.log("ANTES LOGIN");
+
 client.once("clientReady", () => {
   console.log("✅ READY FOI CHAMADO");
+
+console.log("ANTES LOGIN");
 
   client.user.setPresence({
   activities: [
