@@ -1196,8 +1196,45 @@ client.on("interactionCreate", async (interaction) => {
   }
 });
 
+client.on("error", console.error);
 
-client.on("ready", () => {
+client.on("shardError", (err) => {
+  console.error("SHARD ERROR:", err);
+});
+
+client.on("shardDisconnect", (event) => {
+  console.log("SHARD DISCONNECT:", event?.code);
+});
+
+client.on("shardReconnecting", () => {
+  console.log("SHARD RECONNECTING");
+});
+
+client.on("shardResume", () => {
+  console.log("SHARD RESUME");
+});
+
+process.on("unhandledRejection", err => {
+  console.error("UNHANDLED:", err);
+});
+
+process.on("uncaughtException", err => {
+  console.error("CRASH:", err);
+});
+
+process.on("SIGINT", () => {
+  console.log("⚠️ SIGINT RECEBIDO");
+  if (statsDirty) saveStats();
+  process.exit(0);
+});
+
+process.on("SIGTERM", () => {
+  console.log("⚠️ SIGTERM RECEBIDO");
+  if (statsDirty) saveStats();
+  process.exit(0);
+});
+
+client.once("clientReady", () => {
   console.log("✅ READY FOI CHAMADO");
 
   client.user.setPresence({
@@ -1211,15 +1248,7 @@ client.on("ready", () => {
   status: "online"
 });
 });
-process.on("SIGINT", () => {
-  if (statsDirty) saveStats();
-  process.exit();
-});
 
-process.on("SIGTERM", () => {
-  if (statsDirty) saveStats();
-  process.exit();
-});
 
 
 console.log("TOKEN LENGTH:", process.env.DISCORD_TOKEN?.length);
