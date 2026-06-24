@@ -1244,6 +1244,15 @@ setInterval(() => {
   );
 }, 60000);
 
+setInterval(() => {
+  console.log(
+    "READY:",
+    client.isReady(),
+    "STATUS:",
+    client.ws.status
+  );
+}, 30000);
+
 client.once("clientReady", () => {
   console.log("✅ READY FOI CHAMADO");
 
