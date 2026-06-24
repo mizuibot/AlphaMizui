@@ -1,6 +1,5 @@
 require("dotenv").config();
 
-console.log("API KEY:", process.env.GEMINI_API_KEY);
 console.log("📁 RODANDO EM:", __dirname);
 
 const fs = require("fs");
@@ -1138,7 +1137,7 @@ client.commands.set(
 console.log(
   `✅ Prefix carregado: ${command.name}`
 );
-
+}
 client.on("interactionCreate", async (interaction) => {
   if (!interaction.isChatInputCommand()) return;
 
