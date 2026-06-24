@@ -1242,31 +1242,12 @@ process.on("SIGTERM", () => {
   process.exit(0);
 });
 
-setInterval(() => {
-  const mem = process.memoryUsage();
-
-  console.log(
-    "RAM:",
-    Math.round(mem.rss / 1024 / 1024),
-    "MB"
-  );
-}, 60000);
-
-setInterval(() => {
-  console.log(
-    "READY:",
-    client.isReady(),
-    "STATUS:",
-    client.ws.status
-  );
-}, 30000);
-
 console.log("ANTES LOGIN");
 
-client.once("clientReady", () => {
+client.once("ready", () => {
   console.log("✅ READY FOI CHAMADO");
 
-console.log("ANTES LOGIN");
+
 
   client.user.setPresence({
   activities: [
@@ -1280,11 +1261,6 @@ console.log("ANTES LOGIN");
 });
 });
 
-
-
-console.log("TOKEN LENGTH:", process.env.DISCORD_TOKEN?.length);
-console.log("TOKEN RAW:", JSON.stringify(process.env.DISCORD_TOKEN));
-client
-  .login(process.env.DISCORD_TOKEN)
-  .then(() => console.log("TOKEN OK"))
-  .catch((err) => console.log("ERRO LOGIN:", err));
+client.login(process.env.DISCORD_TOKEN)
+  .then(() => console.log("✅ TOKEN OK"))
+  .catch(err => console.error("❌ LOGIN:", err));
