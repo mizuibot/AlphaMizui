@@ -1247,7 +1247,12 @@ console.log("ANTES LOGIN");
 client.once("ready", () => {
   console.log("✅ READY FOI CHAMADO");
 
-
+setInterval(() => {
+  console.log(
+    "VIVO",
+    new Date().toISOString()
+  );
+}, 30000);
 
   client.user.setPresence({
   activities: [
