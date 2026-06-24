@@ -1252,7 +1252,7 @@ setInterval(() => {
     "VIVO",
     new Date().toISOString()
   );
-}, 30000);
+}, 5000);
 
   client.user.setPresence({
   activities: [
