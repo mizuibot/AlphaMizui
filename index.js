@@ -1234,6 +1234,16 @@ process.on("SIGTERM", () => {
   process.exit(0);
 });
 
+setInterval(() => {
+  const mem = process.memoryUsage();
+
+  console.log(
+    "RAM:",
+    Math.round(mem.rss / 1024 / 1024),
+    "MB"
+  );
+}, 60000);
+
 client.once("clientReady", () => {
   console.log("✅ READY FOI CHAMADO");
 
