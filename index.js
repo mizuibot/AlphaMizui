@@ -1237,9 +1237,26 @@ process.on("SIGINT", () => {
 });
 
 process.on("SIGTERM", () => {
-  console.log("⚠️ SIGTERM RECEBIDO");
+  console.log(
+    "⚠️ SIGTERM RECEBIDO",
+    new Date().toISOString(),
+    "UPTIME:",
+    Math.floor(process.uptime()),
+    "MEM:",
+    Math.round(process.memoryUsage().rss / 1024 / 1024) + "MB"
+  );
+
   if (statsDirty) saveStats();
-  process.exit(0);
+
+  // process.exit(0);
+});
+
+process.on("beforeExit", (code) => {
+  console.log("BEFORE EXIT:", code);
+});
+
+process.on("exit", (code) => {
+  console.log("EXIT:", code);
 });
 
 console.log("ANTES LOGIN");
