@@ -1210,16 +1210,8 @@ client.on("shardError", (err) => {
   console.error("SHARD ERROR:", err);
 });
 
-client.on("shardDisconnect", (event) => {
-  console.log("SHARD DISCONNECT:", event?.code);
-});
-
-client.on("shardReconnecting", () => {
-  console.log("SHARD RECONNECTING");
-});
-
-client.on("shardResume", () => {
-  console.log("SHARD RESUME");
+client.on("invalidated", () => {
+  console.log("❌ SESSION INVALIDATED");
 });
 
 process.on("unhandledRejection", err => {
@@ -1233,7 +1225,6 @@ process.on("uncaughtException", err => {
 process.on("SIGINT", () => {
   console.log("⚠️ SIGINT RECEBIDO");
   if (statsDirty) saveStats();
-  process.exit(0);
 });
 
 process.on("SIGTERM", () => {
@@ -1261,15 +1252,16 @@ process.on("exit", (code) => {
 
 console.log("ANTES LOGIN");
 
-client.once("ready", () => {
+client.once("clientReady", () => {
   console.log("✅ READY FOI CHAMADO");
 
 setInterval(() => {
   console.log(
     "VIVO",
-    new Date().toISOString()
+    "UPTIME:",
+    Math.floor(process.uptime())
   );
-}, 5000);
+}, 300000); // 5 min
 
   client.user.setPresence({
   activities: [
