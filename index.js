@@ -1222,16 +1222,6 @@ process.on("uncaughtException", err => {
   console.error("CRASH:", err);
 });
 
-process.on("SIGTERM", () => {
-  console.log("⚠️ SIGTERM RECEBIDO");
-
-  if (statsDirty) saveStats();
-
-  setInterval(() => {
-    console.log("AINDA VIVO APÓS SIGTERM");
-  }, 1000);
-});;
-
 process.on("beforeExit", (code) => {
   console.log("BEFORE EXIT:", code);
 });
