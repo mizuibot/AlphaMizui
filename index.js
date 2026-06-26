@@ -1210,6 +1210,18 @@ client.on("shardError", (err) => {
   console.error("SHARD ERROR:", err);
 });
 
+client.on("shardDisconnect", (event, id) => {
+  console.log("SHARD DISCONNECT", id, event?.code);
+});
+
+client.on("shardResume", (id) => {
+  console.log("SHARD RESUME", id);
+});
+
+client.on("shardReconnecting", (id) => {
+  console.log("SHARD RECONNECTING", id);
+});
+
 client.on("invalidated", () => {
   console.log("❌ SESSION INVALIDATED");
 });
