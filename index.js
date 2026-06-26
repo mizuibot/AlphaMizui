@@ -1222,25 +1222,15 @@ process.on("uncaughtException", err => {
   console.error("CRASH:", err);
 });
 
-process.on("SIGINT", () => {
-  console.log("⚠️ SIGINT RECEBIDO");
-  if (statsDirty) saveStats();
-});
-
 process.on("SIGTERM", () => {
-  console.log(
-    "⚠️ SIGTERM RECEBIDO",
-    new Date().toISOString(),
-    "UPTIME:",
-    Math.floor(process.uptime()),
-    "MEM:",
-    Math.round(process.memoryUsage().rss / 1024 / 1024) + "MB"
-  );
+  console.log("⚠️ SIGTERM RECEBIDO");
 
   if (statsDirty) saveStats();
 
-  // process.exit(0);
-});
+  setInterval(() => {
+    console.log("AINDA VIVO APÓS SIGTERM");
+  }, 1000);
+});;
 
 process.on("beforeExit", (code) => {
   console.log("BEFORE EXIT:", code);
