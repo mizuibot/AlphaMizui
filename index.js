@@ -6,17 +6,6 @@ const fs = require("fs");
 const path = require("path");
 const xpSystem =
 require("./commands/prefixmizui/xpsystem");
-const express = require("express");
-
-const app = express();
-
-app.get("/", (req, res) => {
-  res.send("Mizui Online");
-});
-
-app.listen(process.env.PORT || 3000, () => {
-  console.log("WEB OK");
-});
 
 const EMBED_COLOR_FILE = path.join(
   __dirname,
