@@ -117,16 +117,16 @@ const percent =
       );
 
 const messages = [
-  "💔 O cupido passou longe hoje.",
-  "😅 Melhor ficarem só na amizade.",
-  "🤝 Existe uma conexão interessante.",
-  "😊 Vocês parecem combinar.",
-  "💕 Há algo especial aqui.",
-  "💘 O romance está surgindo.",
-  "❤️ Casal promissor.",
-  "🔥 Química detectada!",
-  "💞 Feitos um para o outro.",
-  "💍 Casamento em breve!"
+  " O cupido passou longe hoje.",
+  " Melhor ficarem só na amizade.",
+  " Existe uma conexão interessante.",
+  " Vocês parecem combinar.",
+  " Há algo especial aqui.",
+  " O romance está surgindo.",
+  " Casal promissor.",
+  " Química detectada!",
+  " Feitos um para o outro.",
+  " Casamento em breve!"
 ];
 
 const randomMessage =
@@ -238,7 +238,7 @@ y="140"
 fill="white"
 font-size="80"
 text-anchor="middle">
-❤️
+
 </text>
 
 <text

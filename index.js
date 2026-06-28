@@ -457,6 +457,14 @@ client.on("messageCreate", async (message) => {
   if (message.author.bot) return;
   if (blacklist.has(message.author.id)) return;
 
+try {
+  xpSystem.addXP(message.author.id, Math.floor(Math.random() * 11) + 10);
+} catch (err) {
+  console.error("XP ERROR:", err);
+}
+
+console.log("PASSOU DO XP");
+
   const jailedUntil = global.jail.get(message.author.id);
 
 if (jailedUntil && jailedUntil > Date.now()) {
@@ -470,14 +478,6 @@ if (jailedUntil && jailedUntil > Date.now()) {
     `⛓️ Você está preso!\n⏳ Tempo restante: **${min}m ${sec}s**\n💸 Fiança: **345.000 mzcoins**`
   );
 }
-
-try {
-  xpSystem.addXP(message.author.id, Math.floor(Math.random() * 11) + 10);
-} catch (err) {
-  console.error("XP ERROR:", err);
-}
-
-console.log("PASSOU DO XP");
  
   // ===== AFK =====
 
@@ -619,15 +619,7 @@ console.log("PASSOU DO ADDMESSAGE");
   const userHistory = getHistory(message.author.id);
   const rawContent = (message.content || "").trim();
   const prefix =
-  global.getPrefix(
-    message.guild.id
-  );
-
-const isCalled =
-  new RegExp(
-    `^${prefix}([,.!?])?(\\s|$)`,
-    "i"
-  ).test(rawContent);
+  global.getPrefix(message.guild.id);
 
 let isReplyToBot = false;
 
@@ -643,33 +635,25 @@ if (message.reference?.messageId) {
 // ignora bots
 if (message.author.bot) return;
 
-const raw = rawContent;
-
 // =========================
-// PREFIX CHECK
+// PARSER COMMAND
 // =========================
-// if (!raw.toLowerCase().startsWith(prefix.toLowerCase())) return;
 
-console.log("RAW:", rawContent);
-console.log("PREFIX:", prefix);
+const raw = rawContent.toLowerCase();
+const lowerPrefix = prefix.toLowerCase();
 
-// =========================
-// PARSE COMMAND
-// =========================
-const withoutPrefix = rawContent.slice(prefix.length).trim();
+const withoutPrefix = raw.slice(lowerPrefix.length).trim();
 
-console.log("SEM PREFIXO:", withoutPrefix);
+if (!withoutPrefix) return;
 
-const args = withoutPrefix.split(/ +/);
+// separa comando e args
+const split = withoutPrefix.split(/\s+/);
 
-console.log("ARGS:", args);
-
-const cmd = args.shift()?.toLowerCase();
+const cmd = split[0];
+const args = split.slice(1);
 
 console.log("CMD FINAL:", cmd);
-
-if (!cmd) return;
-
+console.log("ARGS:", args);
 console.log("EXISTE?", client.commands.has(cmd));
 
 // =========================
@@ -679,7 +663,7 @@ const command = client.commands.get(cmd);
 
 if (command) {
   try {
-    await command.execute(message, args, client);
+    await command.execute(message, [], client);
   } catch (err) {
     console.log("ERRO PREFIX:", err);
     await safeReply(message, "❌ Erro ao executar comando.");
@@ -691,13 +675,10 @@ if (command) {
 const isMention = message.mentions.has(client.user.id);
 
 const shouldRespond =
-  isCalled ||
   isReplyToBot ||
   isMention;
 
 console.log(
-  "CALLED:",
-  isCalled,
   "REPLY:",
   isReplyToBot,
   "MENTION:",
@@ -1231,18 +1212,17 @@ process.on("exit", (code) => {
   console.log("EXIT:", code);
 });
 
-console.log("ANTES LOGIN");
+let intervalStarted = false;
 
-client.once("clientReady", () => {
+client.once("ready", () => {
+  if (intervalStarted) return;
+  intervalStarted = true;
+
   console.log("✅ READY FOI CHAMADO");
 
-setInterval(() => {
-  console.log(
-    "VIVO",
-    "UPTIME:",
-    Math.floor(process.uptime())
-  );
-}, 300000); // 5 min
+  setInterval(() => {
+    console.log("VIVO UPTIME:", Math.floor(process.uptime()));
+  }, 300000);
 
   client.user.setPresence({
   activities: [
