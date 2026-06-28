@@ -3,13 +3,17 @@ require("dotenv").config();
 const express = require("express");
 const app = express();
 
+console.log("1 - iniciou");
+
 app.get("/", (req, res) => {
   res.send("OK");
 });
 
-app.listen(process.env.PORT || 3000, () => {
-  console.log("🌐 Servidor HTTP iniciado.");
+app.listen(process.env.PORT, () => {
+  console.log("2 - PORTA ABERTA");
 });
+
+console.log("3 - fim");
 
 console.log("📁 RODANDO EM:", __dirname);
 
