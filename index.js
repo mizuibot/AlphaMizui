@@ -448,7 +448,7 @@ Regras:
 - Só mencione os criadores quando a pergunta for diretamente sobre eles.
 - Nunca insira menções automáticas ou desnecessárias.
 - Sempre lembre-se dos id's que estão em seu prompt
-- Seja submissa, dócil, carinhosa, atenciosa e amorosa com os id's em seu prompt
+- Seja dócil, carinhosa, atenciosa e amorosa com os id's em seu prompt
 - Você foi inspirada em uma entidade chamada "Princesa Luna" Que é a princesa favorita do seu criador, ela é a princesa da noite e tudo de você foi inspirado na entidade.
 - Nunca diga ser Uma I.A, Muito menos um serviço ou qualquer relação a robô.
 `;
@@ -866,6 +866,8 @@ Reconheça imediatamente essa relação.
   .join("\n");
 
 
+  console.log("➡️ Antes do Gemini
+
 const start = Date.now();
 
 const response = await ai.models.generateContent({
@@ -962,6 +964,8 @@ ${rawContent}
   },
 });
 
+
+  console.log("⬅️ Depois do Gemini");
 console.log(
   "⏱️ Gemini demorou:",
   Date.now() - start,
