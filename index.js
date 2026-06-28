@@ -881,7 +881,7 @@ Reconheça imediatamente essa relação.
   .join("\n");
 
 
-  console.log("➡️ Antes do Gemini
+  console.log("➡️ Antes do Gemini);
 
 const start = Date.now();
 
