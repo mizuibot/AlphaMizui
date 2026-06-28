@@ -1,5 +1,16 @@
 require("dotenv").config();
 
+const express = require("express");
+const app = express();
+
+app.get("/", (req, res) => {
+  res.send("OK");
+});
+
+app.listen(process.env.PORT || 3000, () => {
+  console.log("🌐 Servidor HTTP iniciado.");
+});
+
 console.log("📁 RODANDO EM:", __dirname);
 
 const fs = require("fs");
