@@ -310,6 +310,15 @@ const client = new Client({
   ],
 });
 
+setInterval(() => {
+  console.log({
+    status: client.ws.status,
+    ping: client.ws.ping,
+    ready: client.isReady(),
+    uptime: Math.floor(process.uptime())
+  });
+}, 30000);
+
 client.history = history;
 client.mizuiGuildData = mizuiGuildData;
 global.languages = new Map(Object.entries(raw));
