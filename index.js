@@ -15,6 +15,17 @@ app.listen(process.env.PORT, () => {
 
 console.log("3 - fim");
 
+let last = Date.now();
+
+setInterval(() => {
+  const now = Date.now();
+  const delay = now - last - 5000;
+
+  console.log(`Loop delay: ${delay} ms`);
+
+  last = now;
+}, 5000);
+
 console.log("📁 RODANDO EM:", __dirname);
 
 const fs = require("fs");
