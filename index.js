@@ -1215,43 +1215,33 @@ client.on("interactionCreate", async (interaction) => {
 
 client.on("error", console.error);
 
-client.on("shardError", (err) => {
-  console.error("SHARD ERROR:", err);
+process.on("SIGTERM", () => {
+    console.log("[SIGTERM] Recebido às", new Date().toISOString());
 });
 
-client.on("shardDisconnect", (event, id) => {
-  console.log("SHARD DISCONNECT", id, event?.code);
-});
-
-client.on("shardResume", (id) => {
-  console.log("SHARD RESUME", id);
-});
-
-client.on("shardReconnecting", (id) => {
-  console.log("SHARD RECONNECTING", id);
-});
-
-client.on("invalidated", () => {
-  console.log("❌ SESSION INVALIDATED");
-});
-
-process.on("unhandledRejection", err => {
-  console.error("UNHANDLED:", err);
-});
-
-process.on("uncaughtException", err => {
-  console.error("CRASH:", err);
+process.on("SIGINT", () => {
+    console.log("[SIGINT] Recebido às", new Date().toISOString());
 });
 
 process.on("beforeExit", (code) => {
-  console.log("BEFORE EXIT:", code);
+    console.log("[beforeExit] Código:", code);
 });
 
 process.on("exit", (code) => {
-  console.log("EXIT:", code);
+    console.log("[exit] Código:", code);
 });
 
-let intervalStarted = false;
+process.on("uncaughtException", (err) => {
+    console.error("[uncaughtException]", err);
+});
+
+process.on("unhandledRejection", (reason) => {
+    console.error("[unhandledRejection]", reason);
+});
+
+process.on("warning", (warning) => {
+    console.warn("[warning]", warning);
+});
 
 client.once("ready", () => {
   if (intervalStarted) return;
