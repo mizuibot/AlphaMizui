@@ -1243,6 +1243,8 @@ process.on("warning", (warning) => {
     console.warn("[warning]", warning);
 });
 
+let intervalStarted = false;
+
 client.once("ready", () => {
   if (intervalStarted) return;
   intervalStarted = true;
