@@ -629,6 +629,10 @@ console.log("PASSOU DO ADDMESSAGE");
 
   const userHistory = getHistory(message.author.id);
   const rawContent = (message.content || "").trim();
+
+  console.log("📩 RECEBI:", rawContent);
+
+
   const prefix =
   global.getPrefix(message.guild.id);
 
@@ -695,6 +699,11 @@ console.log(
   "MENTION:",
   isMention
 );
+
+console.log("CALL:", isCalled);
+console.log("REPLY:", isReplyToBot);
+console.log("MENTION:", isMention);
+console.log("SHOULD:", shouldRespond);
 
 if (!shouldRespond) return;
 
