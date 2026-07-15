@@ -700,7 +700,6 @@ console.log(
   isMention
 );
 
-console.log("CALL:", isCalled);
 console.log("REPLY:", isReplyToBot);
 console.log("MENTION:", isMention);
 console.log("SHOULD:", shouldRespond);
