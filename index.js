@@ -1,31 +1,5 @@
 require("dotenv").config();
 
-const express = require("express");
-const app = express();
-
-console.log("1 - iniciou");
-
-app.get("/", (req, res) => {
-  res.send("OK");
-});
-
-app.listen(process.env.PORT, () => {
-  console.log("2 - PORTA ABERTA");
-});
-
-console.log("3 - fim");
-
-let last = Date.now();
-
-setInterval(() => {
-  const now = Date.now();
-  const delay = now - last - 5000;
-
-  console.log(`Loop delay: ${delay} ms`);
-
-  last = now;
-}, 5000);
-
 console.log("📁 RODANDO EM:", __dirname);
 
 const fs = require("fs");
@@ -219,6 +193,8 @@ const {
   EmbedBuilder
 } = require("discord.js");
 const { GoogleGenAI } = require("@google/genai");
+
+console.log("GEMINI_API_KEY:", process.env.GEMINI_API_KEY ? "OK" : "UNDEFINED");
 
 const ai = new GoogleGenAI({
   apiKey: process.env.GEMINI_API_KEY,
@@ -1258,7 +1234,7 @@ client.once("ready", () => {
   client.user.setPresence({
   activities: [
     {
-      name: "Copa do Mundo ao vivo",
+      name: "My Little Pony Friendship is Magic",
       type: 1, // STREAMING
       url: "https://twitch.tv/yourchannel"
     }
