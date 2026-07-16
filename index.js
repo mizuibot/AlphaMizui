@@ -920,7 +920,7 @@ Modo atual: ${mode}
 
 REGRAS:
 - Responda analises completas no máximo 10 linhas
-- se não for analise apenas fale no maximo 4 linhas
+- se não for analise apenas fale no maximo 2 linhas
 - Se tiver imagem, analise profundamente
 - Identifique personagens, memes, animes, etc
 Se houver imagem:
