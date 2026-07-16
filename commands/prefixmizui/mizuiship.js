@@ -93,12 +93,6 @@ else {
   );
 }
 
-if (user1.bot || user2.bot) {
-  return message.reply(
-    "❌ Bots não podem participar do ship."
-  );
-}
-
 const marriages =
   loadMarriages();
 
