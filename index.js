@@ -645,24 +645,26 @@ if (message.author.bot) return;
 const raw = rawContent.toLowerCase();
 const lowerPrefix = prefix.toLowerCase();
 
-const withoutPrefix = raw.slice(lowerPrefix.length).trim();
+const isMention = message.mentions.has(client.user.id);
+const calledWithPrefix = raw.startsWith(lowerPrefix);
 
-if (!withoutPrefix) return;
+let cmd = null;
+let args = [];
 
-// separa comando e args
-const split = withoutPrefix.split(/\s+/);
+if (calledWithPrefix) {
+  const withoutPrefix = raw.slice(lowerPrefix.length).trim();
 
-const cmd = split[0];
-const args = split.slice(1);
-
-console.log("CMD FINAL:", cmd);
-console.log("ARGS:", args);
-console.log("EXISTE?", client.commands.has(cmd));
+  if (withoutPrefix) {
+    const split = withoutPrefix.split(/\s+/);
+    cmd = split[0];
+    args = split.slice(1);
+  }
+}
 
 // =========================
 // EXECUTE COMMAND
 // =========================
-const command = client.commands.get(cmd);
+const command = cmd ? client.commands.get(cmd) : null;
 
 if (command) {
   try {
