@@ -667,7 +667,7 @@ const command = client.commands.get(cmd);
 
 if (command) {
   try {
-    await command.execute(message, [], client);
+    await command.execute(message, args, client);
   } catch (err) {
     console.log("ERRO PREFIX:", err);
     await safeReply(message, "❌ Erro ao executar comando.");

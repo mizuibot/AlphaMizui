@@ -2,11 +2,7 @@ const {
 EmbedBuilder
 } = require("discord.js");
 
-const fs =
-require("fs");
-
-const xpData =
-require("../../xp.json");
+const xpSystem = require("./xpsystem");
 
 module.exports = {
 
@@ -17,46 +13,8 @@ async execute(message) {
 const userId =
   message.author.id;
 
-if (
-  !xpData[userId]
-) {
-
-  xpData[userId] = {
-
-    xp: 0,
-
-    level: 1,
-
-    prestige: 0,
-
-    streak: 0,
-
-    messages: 0,
-
-    voiceMinutes: 0,
-
-    commandsUsed: 0,
-
-    class: "none",
-
-    lastMessage: 0,
-
-    lastDaily: 0
-  };
-
-  fs.writeFileSync(
-    "./xp.json",
-
-    JSON.stringify(
-      xpData,
-      null,
-      2
-    )
-  );
-}
-
 const user =
-  xpData[userId];
+  xpSystem.getUser(userId);
 
 const nextLevel =
   Math.floor(
