@@ -677,11 +677,10 @@ if (command) {
   return;
 }
 
-const isMention = message.mentions.has(client.user.id);
-const calledWithPrefix = raw.startsWith(lowerPrefix);
+
 
 const shouldRespond =
-  raw.startsWith(lowerPrefix) ||
+  calledWithPrefix ||
   isReplyToBot ||
   isMention;
 
