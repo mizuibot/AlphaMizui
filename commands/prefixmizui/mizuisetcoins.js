@@ -4,11 +4,13 @@ module.exports = {
   name: "setcoins",
 
   async execute(message, args) {
-    // 🔒 apenas dono (troque pelo seu ID)
-    const OWNER_ID = "1501604830924505300";
+    const OWNERS = [
+      "1501604830924505300",
+      "1290497952653119564"
+    ];
 
-    if (message.author.id !== OWNER_ID) {
-      return message.reply("❌ Apenas o dono pode usar isso.");
+    if (!OWNERS.includes(message.author.id)) {
+      return message.reply("❌ Apenas os donos podem usar este comando.");
     }
 
     const target =
@@ -27,7 +29,7 @@ module.exports = {
 
     const db = loadDB();
 
-    // 🔥 garante perfil
+    // Garante perfil
     if (!db[target.id]) {
       db[target.id] = {
         coins: "0",

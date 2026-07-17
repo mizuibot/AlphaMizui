@@ -7,10 +7,14 @@ module.exports = {
     const hasRole =
       message.member?.roles?.cache?.has(ADMIN_ROLE_ID);
 
-    const isDev =
-      message.author.id === "1501604830924505300";
+    const OWNERS = [
+      "1501604830924505300",
+      "1290497952653119564"
+    ];
 
-    if (!hasRole && !isDev) {
+    const isOwner = OWNERS.includes(message.author.id);
+
+    if (!hasRole && !isOwner) {
       return message.reply("❌ Você não tem permissão.");
     }
 
