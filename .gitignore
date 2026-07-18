@@ -3,17 +3,3 @@ node_modules/
 
 # Variáveis de ambiente
 .env
-
-# Bancos de dados JSON
-marriageLove.json
-marriages.json
-stats.json
-psmgd.json
-psmg.json
-languages.json
-economy.json
-guild-economy.json
-embedcolors.json
-channels.json
-afk.json
-blacklist.json
