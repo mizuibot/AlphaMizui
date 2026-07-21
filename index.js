@@ -456,6 +456,14 @@ client.on("messageCreate", async (message) => {
   if (message.author.bot) return;
   if (blacklist.has(message.author.id)) return;
 
+ // ===== AUTO MESSAGE =====
+  const autoMsgData = loadAutoMsg();
+  const autoMsg = autoMsgData[message.guild.id];
+
+  if (autoMsg?.message) {
+    await message.reply(autoMsg.message);
+  }
+
 try {
   xpSystem.addXP(message.author.id, Math.floor(Math.random() * 11) + 10);
 } catch (err) {
@@ -481,6 +489,25 @@ if (jailedUntil && jailedUntil > Date.now()) {
   // ===== AFK =====
 
     const AFK_FILE = path.join(__dirname, "afk.json");
+
+    const AUTOMSG_FILE = path.join(__dirname, "automsg.json");
+
+function loadAutoMsg() {
+    if (!fs.existsSync(AUTOMSG_FILE)) return {};
+
+    try {
+        return JSON.parse(fs.readFileSync(AUTOMSG_FILE, "utf8"));
+    } catch {
+        return {};
+    }
+}
+
+function saveAutoMsg(data) {
+    fs.writeFileSync(
+        AUTOMSG_FILE,
+        JSON.stringify(data, null, 2)
+    );
+}
 
   function loadAFK() {
     if (!fs.existsSync(AFK_FILE)) return {};
