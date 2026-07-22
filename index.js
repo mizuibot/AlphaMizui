@@ -186,6 +186,19 @@ function addMessage(guildId, userId) {
 
   statsDirty = true;
 }
+
+const AUTOMSG_FILE = path.join(__dirname, "automsg.json");
+
+function loadAutoMsg() {
+    if (!fs.existsSync(AUTOMSG_FILE)) return {};
+
+    try {
+        return JSON.parse(fs.readFileSync(AUTOMSG_FILE, "utf8"));
+    } catch {
+        return {};
+    }
+}
+
 const {
   Client,
   GatewayIntentBits,
@@ -490,23 +503,11 @@ if (jailedUntil && jailedUntil > Date.now()) {
 
     const AFK_FILE = path.join(__dirname, "afk.json");
 
-    const AUTOMSG_FILE = path.join(__dirname, "automsg.json");
+    const autoMsgData = loadAutoMsg();
+const autoMsg = autoMsgData[message.guild.id];
 
-function loadAutoMsg() {
-    if (!fs.existsSync(AUTOMSG_FILE)) return {};
-
-    try {
-        return JSON.parse(fs.readFileSync(AUTOMSG_FILE, "utf8"));
-    } catch {
-        return {};
-    }
-}
-
-function saveAutoMsg(data) {
-    fs.writeFileSync(
-        AUTOMSG_FILE,
-        JSON.stringify(data, null, 2)
-    );
+if (autoMsg?.message) {
+    await message.reply(autoMsg.message);
 }
 
   function loadAFK() {
