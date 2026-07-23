@@ -499,13 +499,17 @@ client.on("messageCreate", async (message) => {
   if (message.author.bot) return;
   if (blacklist.has(message.author.id)) return;
 
- // ===== AUTO MESSAGE =====
-  const autoMsgData = loadAutoMsg();
-  const autoMsg = autoMsgData[message.guild.id];
+// ===== AUTO MESSAGE =====
 
-  if (autoMsg?.message) {
-    await message.reply(autoMsg.message);
-  }
+const autoMsg = getAutoMsg(message.guild.id);
+
+if (
+    autoMsg &&
+    autoMsg.enabled &&
+    message.channel.id === autoMsg.channelId
+) {
+    await message.channel.send(autoMsg.message);
+}
 
 try {
   xpSystem.addXP(message.author.id, Math.floor(Math.random() * 11) + 10);
