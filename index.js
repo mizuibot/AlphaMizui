@@ -199,6 +199,36 @@ function loadAutoMsg() {
     }
 }
 
+function saveAutoMsg(data) {
+    fs.writeFileSync(AUTOMSG_FILE, JSON.stringify(data, null, 4));
+}
+
+function getAutoMsg(guildId) {
+    const data = loadAutoMsg();
+    return data[guildId] ?? null;
+}
+
+function setAutoMsg(guildId, config) {
+    const data = loadAutoMsg();
+
+    data[guildId] = {
+        enabled: config.enabled ?? true,
+        message: config.message,
+        channelId: config.channelId,
+        cooldown: config.cooldown ?? 0
+    };
+
+    saveAutoMsg(data);
+}
+
+function removeAutoMsg(guildId) {
+    const data = loadAutoMsg();
+
+    delete data[guildId];
+
+    saveAutoMsg(data);
+}
+
 const {
   Client,
   GatewayIntentBits,
@@ -502,10 +532,6 @@ if (jailedUntil && jailedUntil > Date.now()) {
   // ===== AFK =====
 
     const AFK_FILE = path.join(__dirname, "afk.json");
-
-if (autoMsg?.message) {
-    await message.reply(autoMsg.message);
-}
 
   function loadAFK() {
     if (!fs.existsSync(AFK_FILE)) return {};
