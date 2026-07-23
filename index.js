@@ -503,9 +503,6 @@ if (jailedUntil && jailedUntil > Date.now()) {
 
     const AFK_FILE = path.join(__dirname, "afk.json");
 
-    const autoMsgData = loadAutoMsg();
-const autoMsg = autoMsgData[message.guild.id];
-
 if (autoMsg?.message) {
     await message.reply(autoMsg.message);
 }
