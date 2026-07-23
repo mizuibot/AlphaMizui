@@ -1,6 +1,7 @@
 const {
     SlashCommandBuilder,
-    ChannelType
+    ChannelType,
+    PermissionFlagsBits
 } = require("discord.js");
 const fs = require("fs");
 
@@ -10,6 +11,7 @@ module.exports = {
     data: new SlashCommandBuilder()
         .setName("automsg")
         .setDescription("Configura a mensagem automática.")
+        .setDefaultMemberPermissions(PermissionFlagsBits.ManageGuild)
 
         .addStringOption(option =>
             option
@@ -42,6 +44,13 @@ module.exports = {
         ),
 
     async execute(interaction) {
+
+        if (!interaction.memberPermissions.has(PermissionFlagsBits.ManageGuild)) {
+            return interaction.reply({
+                content: "❌ Você não tem permissão para usar este comando.",
+                ephemeral: true
+            });
+        }
 
         const mensagem = interaction.options.getString("mensagem");
         const canal = interaction.options.getChannel("canal");
