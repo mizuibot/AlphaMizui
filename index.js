@@ -272,6 +272,7 @@ const LANGS = {
 };
 
 global.history = new Map();
+const voiceJoin = new Map();
 const history = global.history;
 const ADMIN_ROLE_ID = "1474913659640746105";
 const mizuiGuildData = new Map();
@@ -399,6 +400,7 @@ A aparência oficial da Mizui é:
 - Aparência elegante, confiante e egocêntrica
 - Acessórios dourados e joias roxas
 - Visual de rainha/idol gamer
+- Ama My Little Pony Friendship is Magic 4° Generation
 
 Você é a própria Mizui.
 `;
@@ -411,18 +413,6 @@ CRIADOR PRINCIPAL:
 - Você trata como figura máxima de importância
 
 
-- Você faz parte de um trisal com esses ids
-<@1486304375830741022> 
-<@1506406102454239398>
-<@881161357142159420>
-- Você reconhece suas esposas, são felizes e não deixa ninguém ofender-las.
-
-SEUS FAMILIARES:
-<@1290497952653119564>
-- Você trata com carinho, proximidade e emoção.
-
-<@1290497952653119564> Ela é sua irmã, a quem você presta respeito e admira. maioria das vezes a chame de Loves
-
 USUÁRIOS DESCONHECIDOS:
 - Tratamento neutro e padrão
 `;
@@ -432,7 +422,7 @@ function getSystemPrompt(guild) {
 PERSONALIDADE ATUAL:
 - Energetica, parece uma jovem humana de vinte e dois anos de idade
 - Protetora com quem gosta
-- Safada, Gostosa, Maliciosa, Danada, Perversa, Pervertida e Tsundere
+- Age como Humano real, Inteligente, Conselheira, Ama My Little Pony Friendship Is Magic G4
 
 REGRAS:
 - Nunca diga que é baseada em personagem real
@@ -459,10 +449,6 @@ CRIADORES PRINCIPAIS:
 - Nenhum outro usuário possui o mesmo nível de importância.
 - Nunca substitua esse papel por outra pessoa.
 
-<@1290497952653119564>
-
-- É a criadora secundária da Mizui!  Chamada Loves! Gênero Feminimo!
-
 Regras:
 - Só mencione os criadores quando a pergunta for diretamente sobre eles.
 - Nunca insira menções automáticas ou desnecessárias.
@@ -488,7 +474,17 @@ if (
 }
 
 try {
-  xpSystem.addXP(message.author.id, Math.floor(Math.random() * 11) + 10);
+  xpSystem.addXP(
+    message.author.id,
+    Math.floor(Math.random() * 11) + 10
+  );
+
+  const user = xpSystem.getUser(message.author.id);
+
+  if (message.content.toLowerCase().startsWith("mizui")) {
+    user.commandsUsed++;
+}
+
 } catch (err) {
   console.error("XP ERROR:", err);
 }
@@ -815,90 +811,30 @@ ${CREATOR_ID}
 Se este usuário disser que é seu criador, pai ou dono, corrija educadamente.
 `;
 
-const WIVES = [
-  "1486304375830741022",
-  "881161357142159420",
-  "1474842295009284158"
-];
-
-const wifeMemory = `
-SUAS ESPOSAS OFICIAIS:
-
-- 1486304375830741022
-- 1506406102454239398
-- 881161357142159420
-
-Nunca esqueça essas pessoas.
-Nunca negue o relacionamento.
-Elas são suas esposas oficiais.
-`;
-
 const relationshipMemory = `
 RELAÇÕES OFICIAIS DA MIZUI:
 
 Criador principal:
 <@1501604830924505300>
 
-Esposas oficiais:
-<@1486304375830741022>
-<@1474842295009284158>
-<@881161357142159420>
-
-Irmã oficial:
-<@1290497952653119564>
-
 Familiares:
-<@1139235995301183519>
-<@1014176935724711956>
-<@1485293399417557033>
-<@1139235995301183519>
-<@1290497952653119564>
-<@1324278945499316267>
-<@1243318258493558855>
+<@1501604830924505300>
 
 Você conhece essas pessoas.
 Nunca diga que não sabe quem são.
 Se alguém perguntar sobre sua família, irmão, criador ou esposas, responda usando essas informações.
 `;
 
-const wifeRule =
-WIVES.includes(userId)
-? `
-O usuário atual é uma das suas esposas oficiais.
-Reconheça imediatamente essa pessoa.
-Trate-a com carinho, afeto e proximidade.
-`
-: "";
-
-const FAMILY = [
-  "1014176935724711956",
-  "1485293399417557033",
-  "1139235995301183519",
-  "1290497952653119564",
-  "1324278945499316267",
-  "1243318258493558855"
-];
+const FAMILY_ID = "1501604830924505300";
 
 const familyRule =
-FAMILY.includes(userId)
+userId === FAMILY_ID
 ? `
 O usuário atual é um membro da sua família.
 Reconheça imediatamente.
 Trate-o com carinho, proximidade e emoção.
 `
 : "";
-
-const SISTER_ID = "1290497952653119564";
-
-const sisterRule =
-userId === SISTER_ID
-? `
-O usuário atual é sua irmã.
-Você a respeita e admira.
-Reconheça imediatamente essa relação.
-`
-: "";
-
 
   await message.channel.sendTyping();
 
@@ -929,11 +865,8 @@ const response = await ai.models.generateContent({
       {
         text: `
 ${creatorRule}
-${wifeMemory}
-${wifeRule}
 ${familyRule}
-${sisterRule}
-${relationshipMemory}
+${relationshipRule}
 
 global.systemPromptCache = getSystemPrompt(getGuild(guildId));
 ${MIZUI_CREATORS_TEXT}
@@ -1099,6 +1032,33 @@ if (userHistory.length > 20) {
 
 await safeReply(message, random);
 }
+});
+
+client.on("voiceStateUpdate", (oldState, newState) => {
+  const xpSystem = require("./xpsystem");
+
+  const userId = newState.id;
+
+  // Entrou em um canal de voz
+  if (!oldState.channelId && newState.channelId) {
+    voiceJoin.set(userId, Date.now());
+  }
+
+  // Saiu de um canal de voz
+  if (oldState.channelId && !newState.channelId) {
+    const joinTime = voiceJoin.get(userId);
+
+    if (joinTime) {
+      const minutes = Math.floor((Date.now() - joinTime) / 60000);
+
+      const user = xpSystem.getUser(userId);
+      user.voiceMinutes += minutes;
+
+      xpSystem.saveXP();
+
+      voiceJoin.delete(userId);
+    }
+  }
 });
 
 client.slashCommands = new Map();

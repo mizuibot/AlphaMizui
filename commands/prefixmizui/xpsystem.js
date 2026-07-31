@@ -51,15 +51,49 @@ function createUser(userId) {
   return cache;
 }
 
-function getMultiplier(level) {
-  if (level >= 75) return 4;
-  if (level >= 50) return 3;
-  if (level >= 25) return 2;
-  return 1;
+function getMultiplier(user) {
+  let multi = 1;
+
+  // Bônus por comandos usados
+  if (user.commandsUsed >= 100) multi += 0.5;
+  if (user.commandsUsed >= 500) multi += 0.5;
+  if (user.commandsUsed >= 1000) multi += 1;
+
+  // Bônus por streak
+  if (user.streak >= 7) multi += 0.5;
+  if (user.streak >= 30) multi += 1;
+
+  return multi;
 }
 
 function xpNeeded(level) {
   return Math.floor(100 * Math.pow(level, 1.5));
+}
+
+function updateClass(user) {
+  if (user.level >= 100) {
+    user.class = "Classe X";
+  } else if (user.level >= 90) {
+    user.class = "Classe IX";
+  } else if (user.level >= 85) {
+    user.class = "Classe VIII";
+  } else if (user.level >= 80) {
+    user.class = "Classe VII";
+  } else if (user.level >= 70) {
+    user.class = "Classe VI";
+  } else if (user.level >= 55) {
+    user.class = "Classe V";
+  } else if (user.level >= 40) {
+    user.class = "Classe IV";
+  } else if (user.level >= 25) {
+    user.class = "Classe III";
+  } else if (user.level >= 15) {
+    user.class = "Classe II";
+  } else if (user.level >= 10) {
+    user.class = "Classe I";
+  } else {
+    user.class = "Sem Classe";
+  }
 }
 
 function addXP(userId, amount) {
@@ -67,7 +101,7 @@ function addXP(userId, amount) {
 
   const user = cache[userId];
 
-  user.multiplier = getMultiplier(user.level);
+  user.multiplier = getMultiplier(user);
 
   const gainedXP = Math.floor(amount * user.multiplier);
 
@@ -77,10 +111,18 @@ function addXP(userId, amount) {
   let leveledUp = false;
 
   while (user.xp >= xpNeeded(user.level)) {
-    user.xp -= xpNeeded(user.level);
-    user.level++;
-    leveledUp = true;
+  user.xp -= xpNeeded(user.level);
+  user.level++;
+  leveledUp = true;
+
+  if (user.level >= 100) {
+    user.prestige++;
+    user.level = 1;
+    user.xp = 0;
   }
+}
+
+  updateClass(user);
 
   dirty = true;
 

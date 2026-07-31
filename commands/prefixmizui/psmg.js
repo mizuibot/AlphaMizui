@@ -5,23 +5,20 @@ module.exports = {
   name: "psmg",
 
   async execute(message) {
-
     const stats = JSON.parse(
       fs.readFileSync("./stats.json", "utf8")
     );
 
     const allUsers = {};
 
-    // 🔥 junta tudo globalmente
+    // Junta todas as mensagens globalmente
     for (const guildId of Object.keys(stats)) {
       for (const userId of Object.keys(stats[guildId])) {
-
         if (!allUsers[userId]) {
           allUsers[userId] = 0;
         }
 
-        allUsers[userId] +=
-          stats[guildId][userId].total || 0;
+        allUsers[userId] += stats[guildId][userId].total || 0;
       }
     }
 
@@ -35,8 +32,8 @@ module.exports = {
 
     let text = "";
 
-    sorted.forEach(([id, count], i) => {
-      text += `**${i + 1}.** <@${id}>\n💬 ${count} mensagens\n\n`;
+    sorted.forEach(([, count], i) => {
+      text += `**${i + 1}.** \`Usuário ${i + 1}\`\n💬 Mensagens: **${count}**\n\n`;
     });
 
     const embed = new EmbedBuilder()

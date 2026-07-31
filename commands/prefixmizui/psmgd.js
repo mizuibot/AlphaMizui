@@ -5,7 +5,6 @@ module.exports = {
   name: "psmgd",
 
   async execute(message) {
-
     const stats = JSON.parse(
       fs.readFileSync("./stats.json", "utf8")
     );
@@ -31,8 +30,8 @@ module.exports = {
 
     let text = "";
 
-    sorted.forEach(([id, data], i) => {
-      text += `**${i + 1}.** <@${id}>\n💬 ${data.total || 0} mensagens\n\n`;
+    sorted.forEach(([, data], i) => {
+      text += `**${i + 1}.** \`Usuário ${i + 1}\`\n💬 Mensagens: **${data.total || 0}**\n\n`;
     });
 
     const embed = new EmbedBuilder()
