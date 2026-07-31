@@ -866,7 +866,7 @@ const response = await ai.models.generateContent({
         text: `
 ${creatorRule}
 ${familyRule}
-${relationshipRule}
+${relationshipMemory}
 
 global.systemPromptCache = getSystemPrompt(getGuild(guildId));
 ${MIZUI_CREATORS_TEXT}
@@ -1035,7 +1035,7 @@ await safeReply(message, random);
 });
 
 client.on("voiceStateUpdate", (oldState, newState) => {
-  const xpSystem = require("./xpsystem");
+  const xpSystem = require("./commands/prefixmizui/xpsystem");
 
   const userId = newState.id;
 
