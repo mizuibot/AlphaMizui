@@ -30,9 +30,20 @@ module.exports = {
 
     let text = "";
 
-    sorted.forEach(([, data], i) => {
-      text += `**${i + 1}.** \`Usuário ${i + 1}\`\n💬 Mensagens: **${data.total || 0}**\n\n`;
-    });
+    for (let i = 0; i < sorted.length; i++) {
+      const [userId, data] = sorted[i];
+
+      let userName;
+
+      try {
+        const user = await message.client.users.fetch(userId);
+        userName = user.globalName || user.username;
+      } catch {
+        userName = "Usuário desconhecido";
+      }
+
+      text += `**${i + 1}.** ${userName}\n💬 Mensagens: **${data.total || 0}**\n\n`;
+    }
 
     const embed = new EmbedBuilder()
       .setTitle(`🏰 Top 10 Mensagens • ${message.guild.name}`)

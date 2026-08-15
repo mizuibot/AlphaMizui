@@ -279,6 +279,7 @@ const mizuiGuildData = new Map();
 global.mizuiRotatingStatus = null;
 global.love = new Map();
 global.jail = new Map();
+const autoMsgCooldowns = new Map();
 
 function isJailed(userId) {
   const time = global.jail.get(userId);
@@ -470,7 +471,16 @@ if (
     autoMsg.enabled &&
     message.channel.id === autoMsg.channelId
 ) {
-    await message.channel.send(autoMsg.message);
+    const now = Date.now();
+    const cooldown = 10 * 1000; // 10 segundos
+
+    const lastMessage = autoMsgCooldowns.get(message.channel.id) || 0;
+
+    if (now - lastMessage >= cooldown) {
+        autoMsgCooldowns.set(message.channel.id, now);
+
+        await message.channel.send(autoMsg.message);
+    }
 }
 
 try {
