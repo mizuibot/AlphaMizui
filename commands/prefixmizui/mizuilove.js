@@ -2,8 +2,8 @@ const {
   EmbedBuilder
 } = require("discord.js");
 
-const marriages =
-  require("../../marriages.json");
+const fs = require("fs");
+const { file } = require("../../storage");
 
 const loveSystem =
   require("../../marriagesLove");

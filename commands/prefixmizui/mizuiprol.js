@@ -2,9 +2,11 @@ const fs = require("fs");
 const path = require("path");
 const sharp = require("sharp");
 const { loadDB } = require("../../economy");
+const { file } = require("../../storage");
 
-const STATS_FILE = path.resolve(__dirname, "../../stats.json");
-const MARRIAGES_FILE = path.resolve(process.cwd(), "marriages.json");
+
+const STATS_FILE = file("stats.json");
+const MARRIAGES_FILE = file("marriages.json");
 
 // =====================
 function loadStats() {

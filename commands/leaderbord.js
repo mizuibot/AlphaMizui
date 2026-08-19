@@ -1,6 +1,8 @@
 const { SlashCommandBuilder, EmbedBuilder } = require("discord.js");
 const fs = require("fs");
 
+const { file } = require("../storage");
+
 module.exports = {
   data: new SlashCommandBuilder()
     .setName("leaderboard")
@@ -13,7 +15,7 @@ module.exports = {
 
     try {
       db = JSON.parse(
-        fs.readFileSync("./economy.json", "utf8")
+        fs.readFileSync(file("economy.json"), "utf8")
       );
     } catch (err) {
       console.log(err);

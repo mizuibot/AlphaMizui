@@ -1,8 +1,10 @@
 const { EmbedBuilder } = require("discord.js");
 const fs = require("fs");
 const path = require("path");
+const { file } = require("../../storage");
 
-const STATS_FILE = path.join(__dirname, "../../stats.json");
+
+const STATS_FILE = file("stats.json");
 
 function loadStats() {
   if (!fs.existsSync(STATS_FILE)) return {};

@@ -1,7 +1,9 @@
 const { SlashCommandBuilder, EmbedBuilder } = require("discord.js");
 const fs = require("fs");
 
-const FILE = "./economy.json";
+const { file } = require("../storage");
+
+const FILE = file("economy.json");
 
 function loadDB() {
   try {

@@ -6,8 +6,9 @@ const {
 
 const fs = require("fs");
 const path = require("path");
+const { file } = require("../storage");
 
-const FILE = path.join(__dirname, "../prefixes.json");
+const FILE = file("prefixes.json");
 
 const OWNER_ID = "1501604830924505300";
 

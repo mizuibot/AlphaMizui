@@ -63,12 +63,14 @@ async function safeReply(message, content) {
     return message.channel.send(content);
   }
 }
-const BASE_DIR = __dirname;
+const { file } = require("./storage");
 
-const LANG_FILE = path.join(BASE_DIR, "languages.json");
-const STATS_FILE = path.join(BASE_DIR, "stats.json");
-const MARRIAGES_FILE = path.join(BASE_DIR, "marriages.json");
-const COOLDOWN_FILE = path.join(BASE_DIR, "marryCooldown.json");
+const LANG_FILE = file("languages.json");
+const STATS_FILE = file("stats.json");
+const MARRIAGES_FILE = file("marriages.json");
+const COOLDOWN_FILE = file("marryCooldown.json");
+
+
 
 function loadMarriages() {
   if (!fs.existsSync(MARRIAGES_FILE)) return {};
@@ -187,7 +189,7 @@ function addMessage(guildId, userId) {
   statsDirty = true;
 }
 
-const AUTOMSG_FILE = path.join(__dirname, "automsg.json");
+const AUTOMSG_FILE = file("automsg.json");
 
 function loadAutoMsg() {
     if (!fs.existsSync(AUTOMSG_FILE)) return {};
@@ -303,15 +305,17 @@ function getMizuiTime(guildId) {
   return mizuiTimes.get(guildId) || 10000;
 }
 
+const BLACKLIST_FILE = file("blacklist.json");
+
 const blacklist = new Set(
-  fs.existsSync("./blacklist.json")
-    ? JSON.parse(fs.readFileSync("./blacklist.json", "utf8"))
+  fs.existsSync(BLACKLIST_FILE)
+    ? JSON.parse(fs.readFileSync(BLACKLIST_FILE, "utf8"))
     : []
 );
 
 function saveBlacklist() {
   fs.writeFileSync(
-    "./blacklist.json",
+    BLACKLIST_FILE,
     JSON.stringify([...blacklist], null, 2)
   );
 }
@@ -348,11 +352,8 @@ client.getGuild = getGuild;
 client.commands = new Map();
 global.mizuiName = "mizui-chan";
 
-const CHANNEL_FILE = path.join(__dirname, "channels.json");
-const PREFIX_FILE = path.join(
-  __dirname,
-  "prefixes.json"
-);
+const CHANNEL_FILE = file("channels.json");
+const PREFIX_FILE = file("prefixes.json");
 
 global.prefixes = fs.existsSync(PREFIX_FILE)
   ? JSON.parse(
@@ -517,7 +518,7 @@ if (jailedUntil && jailedUntil > Date.now()) {
  
   // ===== AFK =====
 
-    const AFK_FILE = path.join(__dirname, "afk.json");
+    const AFK_FILE = file("afk.json");
 
   function loadAFK() {
     if (!fs.existsSync(AFK_FILE)) return {};
@@ -829,6 +830,7 @@ Criador principal:
 
 Familiares:
 <@1501604830924505300>
+<@1524110052250882298>
 
 Você conhece essas pessoas.
 Nunca diga que não sabe quem são.
@@ -843,6 +845,17 @@ userId === FAMILY_ID
 O usuário atual é um membro da sua família.
 Reconheça imediatamente.
 Trate-o com carinho, proximidade e emoção.
+`
+: "";
+
+const AUNT_ID = "1524110052250882298";
+
+const auntRule =
+userId === AUNT_ID
+? `
+O usuário atual é sua tia.
+Reconheça imediatamente.
+Trate-a com carinho, proximidade e emoção.
 `
 : "";
 
@@ -877,6 +890,7 @@ const response = await ai.models.generateContent({
 ${creatorRule}
 ${familyRule}
 ${relationshipMemory}
+${auntRule}
 
 global.systemPromptCache = getSystemPrompt(getGuild(guildId));
 ${MIZUI_CREATORS_TEXT}

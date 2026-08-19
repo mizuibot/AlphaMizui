@@ -1,6 +1,7 @@
 const fs = require("fs");
+const { file } = require("../../storage");
 
-const XP_FILE = "./xp.json";
+const XP_FILE = file("xp.json");
 
 // 🔥 CACHE EM MEMÓRIA (NÃO LÊ TODA HORA)
 let cache = {};

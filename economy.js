@@ -3,8 +3,10 @@ const path = require("path");
 
 let cache = null;
 
-const FILE = path.resolve(__dirname, "economy.json");
-const MARRIAGES_FILE = path.resolve(__dirname, "marriages.json");
+const { file } = require("./storage");
+
+const FILE = file("economy.json");
+const MARRIAGES_FILE = file("marriages.json");
 
 // =========================
 // LOAD DB (SEGURO)

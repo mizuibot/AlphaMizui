@@ -5,7 +5,8 @@ const {
 } = require("discord.js");
 const fs = require("fs");
 
-const file = "./automsg.json";
+const { file: storageFile } = require("../storage");
+const file = storageFile("automsg.json");
 
 module.exports = {
     data: new SlashCommandBuilder()

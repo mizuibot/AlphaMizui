@@ -1,8 +1,9 @@
 const { SlashCommandBuilder } = require("discord.js");
 const fs = require("fs");
 const path = require("path");
+const { file } = require("../storage");
 
-const LANG_FILE = path.join(__dirname, "..", "languages.json");
+const LANG_FILE = file("languages.json");
 
 const LANGS = {
   "pt-br": "Português (Brasil)",

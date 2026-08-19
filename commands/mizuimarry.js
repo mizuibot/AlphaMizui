@@ -1,16 +1,12 @@
 const { SlashCommandBuilder, EmbedBuilder } = require("discord.js");
 const fs = require("fs");
 const path = require("path");
+const { file } = require("../storage");
 
-const MARRIAGES_FILE = path.join(
-process.cwd(),
-"marriages.json"
-);
 
-const LOVE_FILE = path.join(
-process.cwd(),
-"marriageLove.json"
-);
+const MARRIAGES_FILE = file("marriages.json");
+
+const LOVE_FILE = file("marriageLove.json");
 
 function loadMarriages() {
 if (!fs.existsSync(MARRIAGES_FILE))

@@ -1,6 +1,8 @@
 const { SlashCommandBuilder, EmbedBuilder } = require("discord.js");
 const fs = require("fs");
 
+const { file } = require("../storage");
+
 module.exports = {
   data: new SlashCommandBuilder()
     .setName("leaderboardlocal")
@@ -15,7 +17,7 @@ module.exports = {
     // LOAD DB
     // =========================
     try {
-      db = JSON.parse(fs.readFileSync("./economy.json", "utf8") || "{}");
+      db = JSON.parse(fs.readFileSync(file("economy.json"), "utf8") || "{}");
     } catch (err) {
       console.log(err);
       return interaction.editReply("❌ Erro ao carregar banco de dados.");

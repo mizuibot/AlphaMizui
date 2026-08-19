@@ -1,12 +1,13 @@
 const { EmbedBuilder } = require("discord.js");
 const fs = require("fs");
+const { file } = require("../../storage");
 
 module.exports = {
   name: "psmg",
 
   async execute(message) {
     const stats = JSON.parse(
-      fs.readFileSync("./stats.json", "utf8")
+      fs.readFileSync(file("stats.json"), "utf8")
     );
 
     const allUsers = {};

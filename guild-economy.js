@@ -1,7 +1,9 @@
 const fs = require("fs");
 const path = require("path");
 
-const FILE = path.resolve(__dirname, "guild-economy.json");
+const { file } = require("./storage");
+
+const FILE = file("guild-economy.json");
 
 // =========================
 // LOAD DB

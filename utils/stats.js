@@ -1,7 +1,9 @@
 const fs = require("fs");
 const path = require("path");
 
-const FILE = path.join(__dirname, "../stats.json");
+const { file } = require("../storage");
+
+const FILE = file("stats.json");
 
 function loadStats() {
   try {

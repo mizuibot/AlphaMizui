@@ -1,8 +1,9 @@
 const { EmbedBuilder } = require("discord.js");
 const fs = require("fs");
 const path = require("path");
+const { file } = require("../../storage");
 
-const AFK_FILE = path.join(__dirname, "../../afk.json");
+const AFK_FILE = file("afk.json");
 
 function loadAFK() {
 if (!fs.existsSync(AFK_FILE)) {
