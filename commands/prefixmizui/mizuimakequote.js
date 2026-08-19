@@ -1,4 +1,4 @@
-const { createQuote } = require("../utils/quoteRenderer");
+const { createQuote } = require("../../utils/quoteRenderer");
 
 module.exports = {
   name: "quote",
