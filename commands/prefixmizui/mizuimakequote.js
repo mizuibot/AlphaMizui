@@ -3,21 +3,32 @@ const { createQuote } = require("../../utils/quoteRenderer");
 module.exports = {
   name: "quote",
 
-  async execute(message, args) {
-    const text = args.join(" ");
+  async execute(message) {
+    // Verifica se você respondeu alguma mensagem
+    if (!message.reference) {
+      return message.reply("❌ Responda a uma mensagem para criar um quote.");
+    }
 
-    if (!text) {
-      return message.reply("❌ Escreva alguma coisa para eu criar o quote.");
+    // Busca a mensagem respondida
+    const quotedMessage = await message.channel.messages.fetch(
+      message.reference.messageId
+    );
+
+    if (!quotedMessage) {
+      return message.reply("❌ Não consegui encontrar essa mensagem.");
     }
 
     const image = await createQuote({
-      avatarUrl: message.author.displayAvatarURL({
+      avatarUrl: quotedMessage.author.displayAvatarURL({
         extension: "png",
         size: 512
       }),
-      text,
-      username: message.author.username,
-      displayName: message.author.displayName
+
+      text: quotedMessage.content,
+
+      username: quotedMessage.author.username,
+
+      displayName: quotedMessage.author.displayName
     });
 
     await message.reply({

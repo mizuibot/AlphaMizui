@@ -6,8 +6,8 @@ async function createQuote({
   username,
   displayName
 }) {
-  const WIDTH = 720;
-  const HEIGHT = 1280;
+  const WIDTH = 1200;
+  const HEIGHT = 630;
 
   // Fundo preto
   const background = {
