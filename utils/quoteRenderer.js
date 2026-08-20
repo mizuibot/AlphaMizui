@@ -16,6 +16,15 @@ async function createQuote({
   // Avatar termina exatamente na posição da linha
   const AVATAR_WIDTH = 540;
 
+  // =========================
+  // SOMBRA DO AVATAR
+  // =========================
+
+  // A sombra começa dentro do avatar
+  // e vai ficando preta até o final dele.
+  const SHADOW_START = 350;
+  const SHADOW_END = AVATAR_WIDTH;
+
   // Limites da área da mensagem
   const TEXT_X = 580;
   const TEXT_MAX_X = 1085;
@@ -215,10 +224,67 @@ async function createQuote({
     xmlns="http://www.w3.org/2000/svg"
   >
 
+    <!-- ========================= -->
+    <!-- SOMBRA SOBRE O AVATAR -->
+    <!-- ========================= -->
+
+    <defs>
+      <linearGradient
+        id="avatarShadow"
+        x1="${SHADOW_START}"
+        y1="0"
+        x2="${SHADOW_END}"
+        y2="0"
+        gradientUnits="userSpaceOnUse"
+      >
+        <!-- Começo praticamente transparente -->
+        <stop
+          offset="0%"
+          stop-color="black"
+          stop-opacity="0"
+        />
+
+        <!-- Começa a escurecer -->
+        <stop
+          offset="55%"
+          stop-color="black"
+          stop-opacity="0.35"
+        />
+
+        <!-- Forte perto do final -->
+        <stop
+          offset="82%"
+          stop-color="black"
+          stop-opacity="0.75"
+        />
+
+        <!-- Final totalmente preto -->
+        <stop
+          offset="100%"
+          stop-color="black"
+          stop-opacity="1"
+        />
+      </linearGradient>
+    </defs>
+
+    <rect
+      x="${SHADOW_START}"
+      y="0"
+      width="${SHADOW_END - SHADOW_START}"
+      height="${HEIGHT}"
+      fill="url(#avatarShadow)"
+    />
+
+    <!-- ========================= -->
     <!-- MENSAGEM -->
+    <!-- ========================= -->
+
     ${messageSVG}
 
+    <!-- ========================= -->
     <!-- NOME -->
+    <!-- ========================= -->
+
     <text
       x="${AUTHOR_X}"
       y="${DISPLAY_NAME_Y}"
@@ -230,7 +296,10 @@ async function createQuote({
       — ${escapedDisplayName}
     </text>
 
+    <!-- ========================= -->
     <!-- USERNAME -->
+    <!-- ========================= -->
+
     <text
       x="${AUTHOR_X}"
       y="${USERNAME_Y}"
