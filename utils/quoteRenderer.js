@@ -21,8 +21,8 @@ async function createQuote({
   const TEXT_MAX_X = 1085;
   const TEXT_MAX_WIDTH = TEXT_MAX_X - TEXT_X;
 
-  // Posição vertical da mensagem
-  const TEXT_Y = 305;
+  // Mensagem 15px mais para cima
+  const TEXT_Y = 290;
 
   // Espaçamento entre linhas
   const LINE_HEIGHT = 48;
@@ -34,6 +34,10 @@ async function createQuote({
   const TEXT_SIZE = 38;
   const DISPLAY_NAME_SIZE = 38;
   const USERNAME_SIZE = 28;
+
+  // Nome e username mais para baixo
+  const DISPLAY_NAME_Y = 535;
+  const USERNAME_Y = 575;
 
   // =========================
   // ESCAPAR TEXTO
@@ -49,7 +53,7 @@ async function createQuote({
   }
 
   // =========================
-  // QUEBRA AUTOMÁTICA
+  // ESTIMAR LARGURA DO TEXTO
   // =========================
 
   function estimateTextWidth(text) {
@@ -74,8 +78,14 @@ async function createQuote({
     return width;
   }
 
+  // =========================
+  // QUEBRA AUTOMÁTICA
+  // =========================
+
   function wrapText(text) {
-    const words = String(text || "").trim().split(/\s+/);
+    const words = String(text || "")
+      .trim()
+      .split(/\s+/);
 
     const lines = [];
     let currentLine = "";
@@ -94,9 +104,9 @@ async function createQuote({
           lines.push(currentLine);
         }
 
-        // Se uma palavra sozinha for maior que a área,
+        // Se uma palavra sozinha for maior que o limite,
         // quebra a própria palavra para nunca ultrapassar
-        // a última linha.
+        // a área da mensagem.
         if (estimateTextWidth(word) > TEXT_MAX_WIDTH) {
           let partial = "";
 
@@ -211,7 +221,7 @@ async function createQuote({
     <!-- NOME -->
     <text
       x="${AUTHOR_X}"
-      y="455"
+      y="${DISPLAY_NAME_Y}"
       fill="white"
       font-family="Arial, sans-serif"
       font-size="${DISPLAY_NAME_SIZE}px"
@@ -222,8 +232,8 @@ async function createQuote({
 
     <!-- USERNAME -->
     <text
-      x="${AUTHOR_X + 90}"
-      y="495"
+      x="${AUTHOR_X}"
+      y="${USERNAME_Y}"
       fill="white"
       font-family="Arial, sans-serif"
       font-size="${USERNAME_SIZE}px"
