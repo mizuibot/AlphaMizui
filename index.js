@@ -864,6 +864,28 @@ Trate-a com carinho, proximidade e emoção.
   const key = message.guild?.id || message.author.id;
   const lang = global.languages.get(key) || "pt-br";
 
+  async function generateWithRetry(ai, options, maxRetries = 3) {
+    for (let attempt = 1; attempt <= maxRetries; attempt++) {
+        try {
+            return await ai.models.generateContent(options);
+        } catch (error) {
+            const status = error?.status || error?.error?.code;
+
+            if (status !== 503 || attempt === maxRetries) {
+                throw error;
+            }
+
+            const delay = attempt * 3000;
+
+            console.log(
+                `⚠️ Gemini 503. Tentativa ${attempt}/${maxRetries}. ` +
+                `Tentando novamente em ${delay / 1000}s...`
+            );
+
+            await new Promise(resolve => setTimeout(resolve, delay));
+        }
+    }
+}
 
   try {
     const recentHistory = userHistory
@@ -878,8 +900,8 @@ Trate-a com carinho, proximidade e emoção.
 
 const start = Date.now();
 
-const response = await ai.models.generateContent({
-  model: "gemini-3.1-flash-lite",
+const response = await generateWithRetry(ai, {
+    model: "gemini-3.1-flash-lite",
 
   contents: [
   {
