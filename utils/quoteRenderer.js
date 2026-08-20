@@ -13,14 +13,15 @@ async function createQuote({
   // CONFIGURAÇÕES
   // =========================
 
-  // Largura que o avatar ocupa
-  const AVATAR_WIDTH = 900;
+  // Avatar ocupa bastante da imagem,
+  // mas o corte fica focado mais à esquerda.
+  const AVATAR_WIDTH = 820;
 
-  // Posição horizontal do texto
-  const TEXT_X = 500;
+  // Texto mais para a direita
+  const TEXT_X = 620;
 
-  // Largura máxima do texto
-  const TEXT_MAX_WIDTH = 600;
+  // Limite horizontal do texto
+  const TEXT_MAX_WIDTH = 500;
 
   // =========================
   // FUNDO PRETO
@@ -50,7 +51,7 @@ async function createQuote({
   );
 
   // =========================
-  // PREPARAR AVATAR
+  // AVATAR
   // =========================
 
   const avatar = await sharp(avatarBuffer)
@@ -62,12 +63,19 @@ async function createQuote({
     .toBuffer();
 
   // =========================
-  // SOMBRA SOBRE O AVATAR
+  // SOMBRA
   // =========================
+  //
+  // A sombra começa sobre o avatar
+  // e vai ficando preta gradualmente.
+  //
+  // Ela é maior para criar aquele
+  // desaparecimento suave da imagem.
+  //
 
   const gradient = Buffer.from(`
     <svg
-      width="${AVATAR_WIDTH}"
+      width="${WIDTH}"
       height="${HEIGHT}"
       xmlns="http://www.w3.org/2000/svg"
     >
@@ -82,6 +90,7 @@ async function createQuote({
           y2="0%"
         >
 
+          <!-- Avatar completamente visível -->
           <stop
             offset="0%"
             stop-color="#000000"
@@ -89,23 +98,37 @@ async function createQuote({
           />
 
           <stop
-            offset="55%"
+            offset="42%"
             stop-color="#000000"
             stop-opacity="0"
           />
 
+          <!-- Começa a escurecer -->
           <stop
-            offset="72%"
+            offset="55%"
+            stop-color="#000000"
+            stop-opacity="0.12"
+          />
+
+          <stop
+            offset="65%"
             stop-color="#000000"
             stop-opacity="0.35"
           />
 
           <stop
-            offset="85%"
+            offset="75%"
             stop-color="#000000"
-            stop-opacity="0.75"
+            stop-opacity="0.60"
           />
 
+          <stop
+            offset="85%"
+            stop-color="#000000"
+            stop-opacity="0.82"
+          />
+
+          <!-- Preto no final -->
           <stop
             offset="100%"
             stop-color="#000000"
@@ -117,7 +140,7 @@ async function createQuote({
       </defs>
 
       <rect
-        width="${AVATAR_WIDTH}"
+        width="${WIDTH}"
         height="${HEIGHT}"
         fill="url(#shadow)"
       />
@@ -126,16 +149,15 @@ async function createQuote({
   `);
 
   // =========================
-  // PREPARAR TEXTO
+  // TEXTO
   // =========================
 
   const lines = wrapText(
     text,
-    34,
-    TEXT_MAX_WIDTH
+    34
   );
 
-  // Limite para não estourar a imagem
+  // Evita que texto demais ultrapasse a imagem
   const visibleLines = lines.slice(0, 7);
 
   const lineHeight = 44;
@@ -143,9 +165,9 @@ async function createQuote({
   const quoteHeight =
     visibleLines.length * lineHeight;
 
-  // Centraliza o bloco da mensagem
-  let startY =
-    (HEIGHT - quoteHeight) / 2 + 32;
+  // Centro vertical da mensagem
+  const startY =
+    (HEIGHT - quoteHeight) / 2 + 35;
 
   let quoteLines = "";
 
@@ -161,18 +183,20 @@ async function createQuote({
     `;
   });
 
-  // Nome abaixo da mensagem
+  // =========================
+  // NOME E USERNAME
+  // =========================
+
   const nameY =
     startY +
     visibleLines.length * lineHeight +
     18;
 
-  // Username abaixo do nome
   const usernameY =
     nameY + 30;
 
   // =========================
-  // SVG DO TEXTO
+  // CAMADA DE TEXTO
   // =========================
 
   const svg = `
@@ -230,71 +254,59 @@ async function createQuote({
   const textLayer = Buffer.from(svg);
 
   // =========================
-  // MONTAR IMAGEM FINAL
+  // IMAGEM FINAL
   // =========================
 
   return await sharp(background)
     .composite([
-
-      // 1. Avatar
+      // Avatar
       {
         input: avatar,
         left: 0,
         top: 0
       },
 
-      // 2. Sombra por cima do avatar
+      // Sombra por cima do avatar
       {
         input: gradient,
         left: 0,
         top: 0
       },
 
-      // 3. Texto por cima da sombra
+      // Texto por cima da sombra
       {
         input: textLayer,
         left: 0,
         top: 0
       }
-
     ])
     .png()
     .toBuffer();
 }
 
 // =========================
-// QUEBRA DE TEXTO
+// QUEBRAR TEXTO
 // =========================
 
-function wrapText(
-  text,
-  maxCharacters,
-  maxWidth
-) {
+function wrapText(text, maxCharacters) {
   const words = String(text).split(/\s+/);
 
   const lines = [];
-
   let currentLine = "";
 
   for (const word of words) {
-
     const testLine = currentLine
       ? `${currentLine} ${word}`
       : word;
 
     if (testLine.length > maxCharacters) {
-
       if (currentLine) {
         lines.push(currentLine);
       }
 
       currentLine = word;
-
     } else {
-
       currentLine = testLine;
-
     }
   }
 
