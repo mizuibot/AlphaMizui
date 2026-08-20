@@ -10,20 +10,32 @@ async function createQuote({
   const HEIGHT = 630;
 
   // =========================
-  // LAYOUT
+  // AVATAR
   // =========================
 
-  // Avatar ocupa toda a altura
-  const AVATAR_WIDTH = 420;
+  const AVATAR_WIDTH = 760;
+  const AVATAR_HEIGHT = 630;
 
-  // Texto começa mais perto do avatar
-  const TEXT_X = 455;
+  const response = await fetch(avatarUrl);
 
-  // Espaço disponível para o texto
-  const TEXT_WIDTH = 680;
+  if (!response.ok) {
+    throw new Error("Não foi possível baixar o avatar.");
+  }
+
+  const avatarBuffer = Buffer.from(
+    await response.arrayBuffer()
+  );
+
+  const avatar = await sharp(avatarBuffer)
+    .resize(AVATAR_WIDTH, AVATAR_HEIGHT, {
+      fit: "cover",
+      position: "centre"
+    })
+    .png()
+    .toBuffer();
 
   // =========================
-  // FUNDO
+  // FUNDO PRETO
   // =========================
 
   const background = {
@@ -36,75 +48,104 @@ async function createQuote({
   };
 
   // =========================
-  // BAIXAR AVATAR
+  // SOMBRA SOBRE O AVATAR
+  // =========================
+  //
+  // Transparente no começo
+  // e vai ficando preto na direita.
+  //
+
+  const shadowSvg = `
+    <svg width="${WIDTH}" height="${HEIGHT}">
+      <defs>
+        <linearGradient
+          id="shadow"
+          x1="0%"
+          y1="0%"
+          x2="100%"
+          y2="0%"
+        >
+          <stop
+            offset="35%"
+            stop-color="black"
+            stop-opacity="0"
+          />
+
+          <stop
+            offset="52%"
+            stop-color="black"
+            stop-opacity="0.05"
+          />
+
+          <stop
+            offset="65%"
+            stop-color="black"
+            stop-opacity="0.45"
+          />
+
+          <stop
+            offset="75%"
+            stop-color="black"
+            stop-opacity="0.85"
+          />
+
+          <stop
+            offset="82%"
+            stop-color="black"
+            stop-opacity="1"
+          />
+        </linearGradient>
+      </defs>
+
+      <rect
+        x="0"
+        y="0"
+        width="${WIDTH}"
+        height="${HEIGHT}"
+        fill="url(#shadow)"
+      />
+    </svg>
+  `;
+
+  const shadowLayer = Buffer.from(shadowSvg);
+
+  // =========================
+  // TEXTO
   // =========================
 
-  const response = await fetch(avatarUrl);
+  const TEXT_X = 800;
+  const TEXT_WIDTH = 350;
 
-  if (!response.ok) {
-    throw new Error("Não foi possível baixar o avatar.");
-  }
+  const lines = wrapText(text, 24);
 
-  const avatarBuffer = Buffer.from(
-    await response.arrayBuffer()
-  );
+  const LINE_HEIGHT = 42;
 
-  // =========================
-  // AVATAR
-  // =========================
+  const quoteHeight = lines.length * LINE_HEIGHT;
 
-  const avatar = await sharp(avatarBuffer)
-    .resize(AVATAR_WIDTH, HEIGHT, {
-      fit: "cover",
-      position: "centre"
-    })
-    .png()
-    .toBuffer();
-
-  // =========================
-  // QUEBRAR TEXTO
-  // =========================
-
-  const lines = wrapText(text, 32);
-
-  const FONT_SIZE = 34;
-  const LINE_HEIGHT = 43;
-
-  const totalTextHeight = lines.length * LINE_HEIGHT;
-
-  let startY =
-    (HEIGHT - totalTextHeight) / 2 + FONT_SIZE;
-
-  // =========================
-  // TEXTO DA MENSAGEM
-  // =========================
+  const quoteStartY =
+    (HEIGHT - quoteHeight) / 2;
 
   let quoteLines = "";
 
-  for (let i = 0; i < lines.length; i++) {
+  lines.forEach((line, index) => {
     quoteLines += `
       <text
         x="${TEXT_X}"
-        y="${startY + i * LINE_HEIGHT}"
+        y="${quoteStartY + (index + 1) * LINE_HEIGHT}"
         class="quote"
       >
-        ${escapeXml(lines[i])}
+        ${escapeXml(line)}
       </text>
     `;
-  }
-
-  // =========================
-  // NOME E USERNAME
-  // =========================
+  });
 
   const nameY =
-    startY + totalTextHeight + 30;
+    quoteStartY +
+    quoteHeight +
+    45;
 
-  const usernameY = nameY + 30;
-
-  // =========================
-  // SVG
-  // =========================
+  const usernameY =
+    nameY + 30;
 
   const svg = `
     <svg
@@ -118,14 +159,13 @@ async function createQuote({
         .quote {
           fill: white;
           font-family: Arial, sans-serif;
-          font-size: ${FONT_SIZE}px;
-          font-weight: 500;
+          font-size: 38px;
         }
 
         .name {
           fill: white;
           font-family: Arial, sans-serif;
-          font-size: 22px;
+          font-size: 23px;
           font-weight: bold;
         }
 
@@ -161,16 +201,26 @@ async function createQuote({
   const textLayer = Buffer.from(svg);
 
   // =========================
-  // MONTAR IMAGEM
+  // MONTAGEM FINAL
   // =========================
 
   return await sharp(background)
     .composite([
+      // Avatar ocupando o lado esquerdo inteiro
       {
         input: avatar,
         left: 0,
         top: 0
       },
+
+      // Sombra que mistura o avatar com o fundo
+      {
+        input: shadowLayer,
+        left: 0,
+        top: 0
+      },
+
+      // Texto
       {
         input: textLayer,
         left: 0,
@@ -189,49 +239,33 @@ function wrapText(text, maxCharacters) {
   const words = String(text).split(/\s+/);
 
   const lines = [];
-  let currentLine = "";
+  let current = "";
 
   for (const word of words) {
-
-    // Palavra gigantesca
-    // quebra ela sozinha para nunca sair da imagem
-    if (word.length > maxCharacters) {
-
-      if (currentLine) {
-        lines.push(currentLine);
-        currentLine = "";
-      }
-
-      for (let i = 0; i < word.length; i += maxCharacters) {
-        lines.push(
-          word.slice(i, i + maxCharacters)
-        );
-      }
-
-      continue;
-    }
-
-    const testLine = currentLine
-      ? `${currentLine} ${word}`
+    const test = current
+      ? `${current} ${word}`
       : word;
 
-    if (testLine.length > maxCharacters) {
-      lines.push(currentLine);
-      currentLine = word;
+    if (test.length > maxCharacters) {
+      if (current) {
+        lines.push(current);
+      }
+
+      current = word;
     } else {
-      currentLine = testLine;
+      current = test;
     }
   }
 
-  if (currentLine) {
-    lines.push(currentLine);
+  if (current) {
+    lines.push(current);
   }
 
   return lines;
 }
 
 // =========================
-// ESCAPAR XML
+// ESCAPE XML
 // =========================
 
 function escapeXml(text) {
