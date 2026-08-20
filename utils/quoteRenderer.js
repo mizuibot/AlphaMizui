@@ -10,16 +10,17 @@ async function createQuote({
   const HEIGHT = 630;
 
   // =========================
-  // CONFIGURAÇÕES DO LAYOUT
+  // LAYOUT
   // =========================
 
-  const AVATAR_SIZE = 360;
+  // Avatar ocupa toda a altura
+  const AVATAR_WIDTH = 420;
 
-  const AVATAR_X = 60;
-  const AVATAR_Y = (HEIGHT - AVATAR_SIZE) / 2;
+  // Texto começa mais perto do avatar
+  const TEXT_X = 455;
 
-  const TEXT_X = 480;
-  const TEXT_WIDTH = 650;
+  // Espaço disponível para o texto
+  const TEXT_WIDTH = 680;
 
   // =========================
   // FUNDO
@@ -49,11 +50,11 @@ async function createQuote({
   );
 
   // =========================
-  // PREPARAR AVATAR
+  // AVATAR
   // =========================
 
   const avatar = await sharp(avatarBuffer)
-    .resize(AVATAR_SIZE, AVATAR_SIZE, {
+    .resize(AVATAR_WIDTH, HEIGHT, {
       fit: "cover",
       position: "centre"
     })
@@ -61,43 +62,49 @@ async function createQuote({
     .toBuffer();
 
   // =========================
-  // PREPARAR TEXTO
+  // QUEBRAR TEXTO
   // =========================
 
-  const quoteText = escapeXml(text);
-  const nameText = escapeXml(displayName);
-  const usernameText = escapeXml(username);
+  const lines = wrapText(text, 32);
 
-  // Quebra a mensagem em linhas
-  const lines = wrapText(text, 38);
+  const FONT_SIZE = 34;
+  const LINE_HEIGHT = 43;
 
-  const lineHeight = 42;
+  const totalTextHeight = lines.length * LINE_HEIGHT;
 
-  const quoteHeight = lines.length * lineHeight;
-
-  const nameY = 330 + quoteHeight / 2 + 35;
-  const usernameY = nameY + 30;
+  let startY =
+    (HEIGHT - totalTextHeight) / 2 + FONT_SIZE;
 
   // =========================
-  // SVG DO TEXTO
+  // TEXTO DA MENSAGEM
   // =========================
 
   let quoteLines = "";
 
-  const startY =
-    315 - ((lines.length - 1) * lineHeight) / 2;
-
-  lines.forEach((line, index) => {
+  for (let i = 0; i < lines.length; i++) {
     quoteLines += `
       <text
         x="${TEXT_X}"
-        y="${startY + index * lineHeight}"
+        y="${startY + i * LINE_HEIGHT}"
         class="quote"
       >
-        ${escapeXml(line)}
+        ${escapeXml(lines[i])}
       </text>
     `;
-  });
+  }
+
+  // =========================
+  // NOME E USERNAME
+  // =========================
+
+  const nameY =
+    startY + totalTextHeight + 30;
+
+  const usernameY = nameY + 30;
+
+  // =========================
+  // SVG
+  // =========================
 
   const svg = `
     <svg
@@ -111,7 +118,7 @@ async function createQuote({
         .quote {
           fill: white;
           font-family: Arial, sans-serif;
-          font-size: 34px;
+          font-size: ${FONT_SIZE}px;
           font-weight: 500;
         }
 
@@ -137,7 +144,7 @@ async function createQuote({
         y="${nameY}"
         class="name"
       >
-        — ${nameText}
+        — ${escapeXml(displayName)}
       </text>
 
       <text
@@ -145,7 +152,7 @@ async function createQuote({
         y="${usernameY}"
         class="username"
       >
-        @${usernameText}
+        @${escapeXml(username)}
       </text>
 
     </svg>
@@ -154,17 +161,16 @@ async function createQuote({
   const textLayer = Buffer.from(svg);
 
   // =========================
-  // MONTAR IMAGEM FINAL
+  // MONTAR IMAGEM
   // =========================
 
   return await sharp(background)
     .composite([
       {
         input: avatar,
-        left: AVATAR_X,
-        top: AVATAR_Y
+        left: 0,
+        top: 0
       },
-
       {
         input: textLayer,
         left: 0,
@@ -180,21 +186,37 @@ async function createQuote({
 // =========================
 
 function wrapText(text, maxCharacters) {
-  const words = String(text).split(" ");
+  const words = String(text).split(/\s+/);
 
   const lines = [];
   let currentLine = "";
 
   for (const word of words) {
+
+    // Palavra gigantesca
+    // quebra ela sozinha para nunca sair da imagem
+    if (word.length > maxCharacters) {
+
+      if (currentLine) {
+        lines.push(currentLine);
+        currentLine = "";
+      }
+
+      for (let i = 0; i < word.length; i += maxCharacters) {
+        lines.push(
+          word.slice(i, i + maxCharacters)
+        );
+      }
+
+      continue;
+    }
+
     const testLine = currentLine
       ? `${currentLine} ${word}`
       : word;
 
     if (testLine.length > maxCharacters) {
-      if (currentLine) {
-        lines.push(currentLine);
-      }
-
+      lines.push(currentLine);
       currentLine = word;
     } else {
       currentLine = testLine;
@@ -209,7 +231,7 @@ function wrapText(text, maxCharacters) {
 }
 
 // =========================
-// PROTEÇÃO XML
+// ESCAPAR XML
 // =========================
 
 function escapeXml(text) {
