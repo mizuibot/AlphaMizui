@@ -13,17 +13,13 @@ async function createQuote({
   // CONFIGURAÇÕES
   // =========================
 
-  // Largura que o avatar ocupa
-  const AVATAR_WIDTH = 420;
+  // O avatar vai até a posição da linha azul da referência
+  const AVATAR_WIDTH = 540;
 
-  // Onde começa o texto
+  // Onde começa a mensagem
   const TEXT_X = 455;
 
-  // Linha azul grossa
-  const BLUE_LINE_X = 540;
-  const BLUE_LINE_WIDTH = 55;
-
-  // Área do autor
+  // Posição do nome do usuário
   const AUTHOR_X = 680;
 
   // Tamanho das letras — NÃO ALTERADO
@@ -66,7 +62,7 @@ async function createQuote({
   });
 
   // =========================
-  // TEXTO
+  // ESCAPAR TEXTOS
   // =========================
 
   const escapedText = String(text || "")
@@ -84,10 +80,18 @@ async function createQuote({
     .replace(/</g, "&lt;")
     .replace(/>/g, "&gt;");
 
-  const svg = `
-  <svg width="${WIDTH}" height="${HEIGHT}" xmlns="http://www.w3.org/2000/svg">
+  // =========================
+  // TEXTO
+  // =========================
 
-    <!-- TEXTO DA FRASE -->
+  const svg = `
+  <svg
+    width="${WIDTH}"
+    height="${HEIGHT}"
+    xmlns="http://www.w3.org/2000/svg"
+  >
+
+    <!-- MENSAGEM DO USUÁRIO -->
     <text
       x="${TEXT_X}"
       y="305"
@@ -99,11 +103,11 @@ async function createQuote({
       ${escapedText}
     </text>
 
-    <!-- NOME -->
+    <!-- NOME DO USUÁRIO -->
     <text
       x="${AUTHOR_X}"
       y="455"
-      fill="#2457ff"
+      fill="white"
       font-family="Arial, sans-serif"
       font-size="${DISPLAY_NAME_SIZE}px"
       font-weight="400"
@@ -115,7 +119,7 @@ async function createQuote({
     <text
       x="${AUTHOR_X + 105}"
       y="495"
-      fill="#2457ff"
+      fill="white"
       font-family="Arial, sans-serif"
       font-size="${USERNAME_SIZE}px"
       font-weight="400"
@@ -123,20 +127,11 @@ async function createQuote({
       @${escapedUsername}
     </text>
 
-    <!-- LINHA AZUL -->
-    <rect
-      x="${BLUE_LINE_X}"
-      y="0"
-      width="${BLUE_LINE_WIDTH}"
-      height="${HEIGHT}"
-      fill="#1557ff"
-    />
-
   </svg>
   `;
 
   // =========================
-  // COMPOSIÇÃO
+  // COMPOSIÇÃO FINAL
   // =========================
 
   return background
