@@ -13,19 +13,122 @@ async function createQuote({
   // CONFIGURAÇÕES
   // =========================
 
-  // O avatar vai até a posição da linha azul da referência
+  // Avatar termina exatamente na posição da linha
   const AVATAR_WIDTH = 540;
 
-  // Onde começa a mensagem
-  const TEXT_X = 455;
+  // Limites da área da mensagem
+  const TEXT_X = 580;
+  const TEXT_MAX_X = 1085;
+  const TEXT_MAX_WIDTH = TEXT_MAX_X - TEXT_X;
 
-  // Posição do nome do usuário
+  // Posição vertical da mensagem
+  const TEXT_Y = 305;
+
+  // Espaçamento entre linhas
+  const LINE_HEIGHT = 48;
+
+  // Área do autor
   const AUTHOR_X = 680;
 
   // Tamanho das letras — NÃO ALTERADO
   const TEXT_SIZE = 38;
   const DISPLAY_NAME_SIZE = 38;
   const USERNAME_SIZE = 28;
+
+  // =========================
+  // ESCAPAR TEXTO
+  // =========================
+
+  function escapeXML(value) {
+    return String(value || "")
+      .replace(/&/g, "&amp;")
+      .replace(/</g, "&lt;")
+      .replace(/>/g, "&gt;")
+      .replace(/"/g, "&quot;")
+      .replace(/'/g, "&apos;");
+  }
+
+  // =========================
+  // QUEBRA AUTOMÁTICA
+  // =========================
+
+  function estimateTextWidth(text) {
+    let width = 0;
+
+    for (const char of text) {
+      if (char === " ") {
+        width += TEXT_SIZE * 0.28;
+      } else if (/[A-ZÁÀÃÂÉÊÍÓÔÕÚÇ]/.test(char)) {
+        width += TEXT_SIZE * 0.65;
+      } else if (/[a-záàãâéêíóôõúç]/.test(char)) {
+        width += TEXT_SIZE * 0.52;
+      } else if (/[0-9]/.test(char)) {
+        width += TEXT_SIZE * 0.55;
+      } else if (/[.,!?;:'"`]/.test(char)) {
+        width += TEXT_SIZE * 0.28;
+      } else {
+        width += TEXT_SIZE * 0.50;
+      }
+    }
+
+    return width;
+  }
+
+  function wrapText(text) {
+    const words = String(text || "").trim().split(/\s+/);
+
+    const lines = [];
+    let currentLine = "";
+
+    for (const word of words) {
+      const testLine = currentLine
+        ? `${currentLine} ${word}`
+        : word;
+
+      const width = estimateTextWidth(testLine);
+
+      if (width <= TEXT_MAX_WIDTH) {
+        currentLine = testLine;
+      } else {
+        if (currentLine) {
+          lines.push(currentLine);
+        }
+
+        // Se uma palavra sozinha for maior que a área,
+        // quebra a própria palavra para nunca ultrapassar
+        // a última linha.
+        if (estimateTextWidth(word) > TEXT_MAX_WIDTH) {
+          let partial = "";
+
+          for (const char of word) {
+            const testPartial = partial + char;
+
+            if (
+              estimateTextWidth(testPartial) <= TEXT_MAX_WIDTH
+            ) {
+              partial = testPartial;
+            } else {
+              if (partial) {
+                lines.push(partial);
+              }
+
+              partial = char;
+            }
+          }
+
+          currentLine = partial;
+        } else {
+          currentLine = word;
+        }
+      }
+    }
+
+    if (currentLine) {
+      lines.push(currentLine);
+    }
+
+    return lines;
+  }
 
   // =========================
   // AVATAR
@@ -62,26 +165,37 @@ async function createQuote({
   });
 
   // =========================
-  // ESCAPAR TEXTOS
+  // TEXTO DA MENSAGEM
   // =========================
 
-  const escapedText = String(text || "")
-    .replace(/&/g, "&amp;")
-    .replace(/</g, "&lt;")
-    .replace(/>/g, "&gt;");
+  const messageLines = wrapText(text);
 
-  const escapedDisplayName = String(displayName || "")
-    .replace(/&/g, "&amp;")
-    .replace(/</g, "&lt;")
-    .replace(/>/g, "&gt;");
+  const messageSVG = messageLines
+    .map((line, index) => {
+      const y = TEXT_Y + (index * LINE_HEIGHT);
 
-  const escapedUsername = String(username || "")
-    .replace(/&/g, "&amp;")
-    .replace(/</g, "&lt;")
-    .replace(/>/g, "&gt;");
+      return `
+        <text
+          x="${TEXT_X}"
+          y="${y}"
+          fill="white"
+          font-family="Arial, sans-serif"
+          font-size="${TEXT_SIZE}px"
+          font-weight="400"
+        >${escapeXML(line)}</text>
+      `;
+    })
+    .join("");
 
   // =========================
-  // TEXTO
+  // NOME E USERNAME
+  // =========================
+
+  const escapedDisplayName = escapeXML(displayName);
+  const escapedUsername = escapeXML(username);
+
+  // =========================
+  // SVG
   // =========================
 
   const svg = `
@@ -91,19 +205,10 @@ async function createQuote({
     xmlns="http://www.w3.org/2000/svg"
   >
 
-    <!-- MENSAGEM DO USUÁRIO -->
-    <text
-      x="${TEXT_X}"
-      y="305"
-      fill="white"
-      font-family="Arial, sans-serif"
-      font-size="${TEXT_SIZE}px"
-      font-weight="400"
-    >
-      ${escapedText}
-    </text>
+    <!-- MENSAGEM -->
+    ${messageSVG}
 
-    <!-- NOME DO USUÁRIO -->
+    <!-- NOME -->
     <text
       x="${AUTHOR_X}"
       y="455"
@@ -117,7 +222,7 @@ async function createQuote({
 
     <!-- USERNAME -->
     <text
-      x="${AUTHOR_X + 105}"
+      x="${AUTHOR_X + 90}"
       y="495"
       fill="white"
       font-family="Arial, sans-serif"
