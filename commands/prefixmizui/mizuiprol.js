@@ -109,7 +109,7 @@ module.exports = {
 
     const background =
       profile.background ||
-      "https://i.imgur.com/UWqQSjT.jpeg";
+      "https://i.pinimg.com/originals/5e/7c/ff/5e7cffc0a6ab6990058ba1bd99ff4692.jpg";
 
     const avatar =
       profile.customAvatar ||
