@@ -163,7 +163,21 @@ const serverDate = message.member?.joinedTimestamp
     // =====================
     console.log("ANTES BACKGROUND");
 
-const bgImage = await sharp(await getBuffer(background))
+let bgBuffer;
+
+try {
+  bgBuffer = await getBuffer(background);
+} catch {
+  console.log("⚠️ Background inválido. Usando fundo padrão.");
+
+  bgBuffer = Buffer.from(`
+    <svg width="900" height="500" xmlns="http://www.w3.org/2000/svg">
+      <rect width="900" height="500" fill="#181818"/>
+    </svg>
+  `);
+}
+
+const bgImage = await sharp(bgBuffer)
   .resize(900, 500)
   .png()
   .toBuffer();
