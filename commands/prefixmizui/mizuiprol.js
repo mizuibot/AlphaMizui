@@ -36,7 +36,25 @@ const ICONS = {
 };
 
 async function getBuffer(url) {
-  return Buffer.from(await fetch(url).then(r => r.arrayBuffer()));
+  console.log("🔗 BAIXANDO:", url);
+
+  const response = await fetch(url);
+
+  console.log("📡 STATUS:", response.status);
+  console.log(
+    "📦 CONTENT-TYPE:",
+    response.headers.get("content-type")
+  );
+
+  if (!response.ok) {
+    throw new Error(
+      `Falha ao baixar imagem: ${response.status}`
+    );
+  }
+
+  return Buffer.from(
+    await response.arrayBuffer()
+  );
 }
 
 // =====================
