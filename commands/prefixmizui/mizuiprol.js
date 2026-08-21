@@ -143,15 +143,21 @@ const serverDate = message.member?.joinedTimestamp
     // =====================
     // IMAGENS
     // =====================
-    const bgImage = await sharp(await getBuffer(background))
-      .resize(900, 500)
-      .png()
-      .toBuffer();
+    console.log("ANTES BACKGROUND");
 
-    const avatarBuffer = await sharp(await getBuffer(avatar))
-      .resize(160, 160)
-      .png()
-      .toBuffer();
+const bgImage = await sharp(await getBuffer(background))
+  .resize(900, 500)
+  .png()
+  .toBuffer();
+
+console.log("BACKGROUND OK");
+
+const avatarBuffer = await sharp(await getBuffer(avatar))
+  .resize(160, 160)
+  .png()
+  .toBuffer();
+
+console.log("AVATAR OK");
 
     const mask = Buffer.from(`
       <svg width="160" height="160">
