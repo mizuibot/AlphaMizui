@@ -184,10 +184,28 @@ const bgImage = await sharp(bgBuffer)
 
 console.log("BACKGROUND OK");
 
-const avatarBuffer = await sharp(await getBuffer(avatar))
-  .resize(160, 160)
-  .png()
-  .toBuffer();
+let avatarBuffer;
+
+try {
+  avatarBuffer = await sharp(await getBuffer(avatar))
+    .resize(160, 160)
+    .png()
+    .toBuffer();
+} catch {
+  console.log("⚠️ Avatar inválido. Usando avatar do Discord.");
+
+  avatarBuffer = await sharp(
+    await getBuffer(
+      message.author.displayAvatarURL({
+        extension: "png",
+        size: 512
+      })
+    )
+  )
+    .resize(160, 160)
+    .png()
+    .toBuffer();
+}
 
 console.log("AVATAR OK");
 
