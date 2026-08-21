@@ -5,6 +5,16 @@ const {
 const fs = require("fs");
 const { file } = require("../../storage");
 
+const MARRIAGES_FILE = file("marriages.json");
+
+function loadMarriages() {
+  if (!fs.existsSync(MARRIAGES_FILE)) return {};
+
+  return JSON.parse(
+    fs.readFileSync(MARRIAGES_FILE, "utf8")
+  );
+}
+
 const loveSystem =
   require("../../marriagesLove");
 
@@ -15,8 +25,10 @@ module.exports = {
 
   async execute(message) {
 
-    const married =
-      marriages[message.author.id];
+  const marriages = loadMarriages();
+
+  const married =
+    marriages[message.author.id];
 
     if (
       !married ||
