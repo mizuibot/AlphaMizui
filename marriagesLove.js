@@ -3,7 +3,7 @@ const path = require("path");
 
 const FILE = path.join(
   __dirname,
-  "marriagessLove.json"
+  "marriagesLove.json"
 );
 
 function loadLove() {
