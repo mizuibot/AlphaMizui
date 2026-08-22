@@ -796,30 +796,29 @@ setTimeout(() => {
   displayName
 };
   const IDENTITIES = new Set([
-  "1501604830924505300",  // seu creator, Deus e Pai.
-  "1474842295009284158",
-  "1324278945499316267"
+  "1524110052250882298",
+  "1147855244689145947",
+  "1501604830924505300"
 ]);
 
 const isCreator = IDENTITIES.has(userId);
 
-const CREATOR_ID = "1501604830924505300";
-
-const creatorRule =
-userId === CREATOR_ID
-? `
-O usuário atual é seu criador principal.
+const creatorRule = isCreator
+  ? `
+O usuário atual é um dos seus 3 criadores.
 `
-: `
+  : `
 O usuário atual NÃO é seu criador.
 
 ID do usuário atual:
 ${userId}
 
-Seu único criador é:
-${CREATOR_ID}
-
 Se este usuário disser que é seu criador, pai ou dono, corrija educadamente.
+
+Se precisar identificar seus criadores, eles são:
+- 1524110052250882298
+- 1147855244689145947
+- 1501604830924505300
 `;
 
 const relationshipMemory = `
@@ -837,17 +836,6 @@ Você conhece essas pessoas.
 Nunca diga que não sabe quem são.
 Se alguém perguntar sobre sua família, irmão, criador ou esposas, responda usando essas informações.
 `;
-
-const FAMILY_ID = "1501604830924505300";
-
-const familyRule =
-userId === FAMILY_ID
-? `
-O usuário atual é um membro da sua família.
-Reconheça imediatamente.
-Trate-o com carinho, proximidade e emoção.
-`
-: "";
 
 const SISTER_ID = "1243318258493558855";
 
@@ -868,6 +856,17 @@ userId === AUNT_ID
 O usuário atual é sua tia.
 Reconheça imediatamente.
 Trate-a com carinho, proximidade e emoção.
+`
+: "";
+
+const FAMILY_ID = "1501604830924505300";
+
+const familyRule =
+userId === FAMILY_ID
+? `
+O usuário atual é um membro da sua família.
+Reconheça imediatamente.
+Trate-o com carinho, proximidade e emoção.
 `
 : "";
 
@@ -923,11 +922,11 @@ const response = await generateWithRetry(ai, {
     parts: [
       {
         text: `
-${creatorRule}
-${familyRule}
 ${relationshipMemory}
+${creatorRule}
 ${auntRule}
 ${sisterRule}
+${familyRule}
 
 global.systemPromptCache = getSystemPrompt(getGuild(guildId));
 ${MIZUI_CREATORS_TEXT}
