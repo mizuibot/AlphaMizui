@@ -849,6 +849,17 @@ Trate-o com carinho, proximidade e emoção.
 `
 : "";
 
+const SISTER_ID = "1243318258493558855";
+
+const sisterRule =
+userId === SISTER_ID
+? `
+O usuário atual é sua irmã.
+Reconheça imediatamente.
+Trate-a com carinho, proximidade e emoção.
+`
+: "";
+
 const AUNT_ID = "1524110052250882298";
 
 const auntRule =
@@ -860,16 +871,7 @@ Trate-a com carinho, proximidade e emoção.
 `
 : "";
 
-const SISTER_ID = "1243318258493558855";
 
-const sisterRule =
-userId === SISTER_ID
-? `
-O usuário atual é sua irmã.
-Reconheça imediatamente.
-Trate-a com carinho, proximidade e emoção.
-`
-: "";
 
   await message.channel.sendTyping();
 
