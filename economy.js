@@ -398,7 +398,7 @@ module.exports = {
 
   marry,
   divorce,
-  getBalance
+  getBalance,
 
   getChildren,
   addChild,
