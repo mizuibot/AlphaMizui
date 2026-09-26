@@ -108,8 +108,12 @@ function ensureUser(db, id, username = "Unknown", avatar = "") {
 
       background: null,
       bio: "",
-      customAvatar: null
-    };
+      customAvatar: null,
+
+      family: {
+       children: []
+     }
+  };
 
     saveDB(db);
   }
@@ -123,12 +127,22 @@ function ensureUser(db, id, username = "Unknown", avatar = "") {
   if (!user.cooldowns) user.cooldowns = {};
 
   if (typeof user.work !== "number") user.work = 0;
+
   if (typeof user.daily !== "number") user.daily = 0;
 
   if (user.background == null) user.background = null;
   if (user.bio == null) user.bio = "";
   if (user.customAvatar == null) user.customAvatar = null;
 
+  if (!user.family || typeof user.family !== "object") {
+  user.family = {
+    children: []
+  };
+}
+
+  if (!Array.isArray(user.family.children)) {
+  user.family.children = [];
+}
   return user;
 }
 
@@ -319,6 +333,48 @@ function getBalance(id) {
 }
 
 // =========================
+// FAMÍLIA
+// =========================
+
+function getChildren(id) {
+  const db = loadDB();
+  const user = ensureUser(db, id);
+
+  return user.family.children;
+}
+
+function addChild(parentId, childId) {
+  const db = loadDB();
+
+  const parent = ensureUser(db, parentId);
+  ensureUser(db, childId);
+
+  if (!parent.family.children.includes(childId)) {
+    parent.family.children.push(childId);
+  }
+
+  saveDB(db);
+
+  return true;
+}
+
+function removeChild(parentId, childId) {
+  const db = loadDB();
+
+  const parent = ensureUser(db, parentId);
+
+  const index = parent.family.children.indexOf(childId);
+
+  if (index === -1) return false;
+
+  parent.family.children.splice(index, 1);
+
+  saveDB(db);
+
+  return true;
+}
+
+// =========================
 // EXPORTS
 // =========================
 module.exports = {
@@ -343,4 +399,8 @@ module.exports = {
   marry,
   divorce,
   getBalance
+
+  getChildren,
+  addChild,
+  removeChild
 };
