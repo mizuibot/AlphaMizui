@@ -1,83 +1,64 @@
-const { EmbedBuilder } = require('discord.js');
+const { EmbedBuilder } = require("discord.js");
 const Economy = require("../../economy");
 
 module.exports = {
-    name: 'linhagem',
-    description: 'Mostra a árvore genealógica de uma pessoa.',
+    name: "linhagem",
 
-    async execute(message, args) {
-        const pessoa = message.mentions.users.first() || message.author;
-
-        const filhos = Family.getAdopted(pessoa.id);
-
-        if (filhos.length === 0) {
-            const embed = new EmbedBuilder()
-                .setTitle(`🌳 Linhagem de ${pessoa.username}`)
-                .setDescription(
-                    `${pessoa} ainda não possui filhos adotivos.`
-                )
-                .setThumbnail(
-                    pessoa.displayAvatarURL({ dynamic: true })
-                )
-                .setColor('Green');
-
-            return message.reply({
-                embeds: [embed]
-            });
-        }
+    async execute(message) {
+        const alvo = message.mentions.users.first() || message.author;
 
         const visitados = new Set();
 
-        async function criarArvore(userId, nivel = 0) {
-            if (visitados.has(userId)) {
-                return '';
-            }
+        async function montarArvore(userId, prefix = "") {
+            if (visitados.has(userId)) return "";
 
             visitados.add(userId);
 
-            const filhos = Family.getAdopted(userId);
+            const filhos = Economy.getChildren(userId);
 
-            if (filhos.length === 0) {
-                return '';
+            if (!filhos || filhos.length === 0) {
+                return "";
             }
 
-            let resultado = '';
+            let arvore = "";
 
-            for (const filhoId of filhos) {
-                try {
-                    const filho = await message.client.users.fetch(filhoId);
+            for (let i = 0; i < filhos.length; i++) {
+                const filhoId = filhos[i];
 
-                    resultado +=
-                        `${'│   '.repeat(nivel)}├── 👶 ${filho}\n`;
+                const filho = await message.client.users
+                    .fetch(filhoId)
+                    .catch(() => null);
 
-                    resultado += await criarArvore(
-                        filhoId,
-                        nivel + 1
-                    );
-                } catch {
-                    resultado +=
-                        `${'│   '.repeat(nivel)}├── 👶 <@${filhoId}>\n`;
-                }
+                if (!filho) continue;
+
+                const ultimo = i === filhos.length - 1;
+
+                arvore += `${prefix}${ultimo ? "└──" : "├──"} 👤 ${filho.username}\n`;
+
+                arvore += await montarArvore(
+                    filhoId,
+                    prefix + (ultimo ? "    " : "│   ")
+                );
             }
 
-            return resultado;
+            return arvore;
         }
 
-        const arvore = await criarArvore(pessoa.id);
+        const arvore = await montarArvore(alvo.id);
+
+        const descricao = arvore
+            ? `👤 **${alvo.username}**\n${arvore}`
+            : `👤 **${alvo.username}**\n\n> Essa pessoa não possui descendentes.`;
 
         const embed = new EmbedBuilder()
-            .setTitle(`🌳 Linhagem de ${pessoa.username}`)
-            .setDescription(
-                `👤 **${pessoa}**\n` +
-                arvore
-            )
+            .setTitle("🌳 Linhagem")
+            .setDescription(descricao)
+            .setColor("#9b59b6")
             .setThumbnail(
-                pessoa.displayAvatarURL({ dynamic: true })
-            )
-            .setColor('Green')
-            .setTimestamp();
+                alvo.displayAvatarURL({ dynamic: true })
+            );
 
-        return message.reply({
+        await message.reply({
             embeds: [embed]
         });
     }
