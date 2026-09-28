@@ -336,38 +336,159 @@ function getBalance(id) {
 // FAMÍLIA
 // =========================
 
-function getChildren(id) {
+function ensureFamilyServer(user, guildId) {
+  if (!user.family || typeof user.family !== "object") {
+    user.family = {};
+  }
+
+  if (!user.family[guildId] || typeof user.family[guildId] !== "object") {
+    user.family[guildId] = {
+      parent: null,
+      children: []
+    };
+  }
+
+  if (!Array.isArray(user.family[guildId].children)) {
+    user.family[guildId].children = [];
+  }
+
+  if (user.family[guildId].parent === undefined) {
+    user.family[guildId].parent = null;
+  }
+
+  return user.family[guildId];
+}
+
+
+function getFamily(id, guildId) {
   const db = loadDB();
   const user = ensureUser(db, id);
 
-  return user.family.children;
-}
-
-function addChild(parentId, childId) {
-  const db = loadDB();
-
-  const parent = ensureUser(db, parentId);
-  ensureUser(db, childId);
-
-  if (!parent.family.children.includes(childId)) {
-    parent.family.children.push(childId);
-  }
+  const family = ensureFamilyServer(user, guildId);
 
   saveDB(db);
 
-  return true;
+  return family;
 }
 
-function removeChild(parentId, childId) {
+
+function getChildren(id, guildId) {
+  const db = loadDB();
+  const user = ensureUser(db, id);
+
+  const family = ensureFamilyServer(user, guildId);
+
+  saveDB(db);
+
+  return family.children;
+}
+
+
+function getParent(id, guildId) {
+  const db = loadDB();
+  const user = ensureUser(db, id);
+
+  const family = ensureFamilyServer(user, guildId);
+
+  saveDB(db);
+
+  return family.parent;
+}
+
+
+function addChild(parentId, childId, guildId) {
   const db = loadDB();
 
   const parent = ensureUser(db, parentId);
+  const child = ensureUser(db, childId);
 
-  const index = parent.family.children.indexOf(childId);
+  const parentFamily = ensureFamilyServer(parent, guildId);
+  const childFamily = ensureFamilyServer(child, guildId);
 
-  if (index === -1) return false;
+  // Não pode adotar a si mesmo
+  if (parentId === childId) {
+    return {
+      success: false,
+      reason: "self"
+    };
+  }
 
-  parent.family.children.splice(index, 1);
+  // A pessoa já possui pai/mãe nesse servidor
+  if (
+    childFamily.parent &&
+    childFamily.parent !== parentId
+  ) {
+    return {
+      success: false,
+      reason: "hasParent"
+    };
+  }
+
+  // Já é filho dessa pessoa
+  if (parentFamily.children.includes(childId)) {
+    return {
+      success: false,
+      reason: "alreadyChild"
+    };
+  }
+
+  // Evita ciclo simples:
+  // A não pode adotar seu próprio ancestral
+  let currentId = parentId;
+  const visited = new Set();
+
+  while (currentId) {
+    if (visited.has(currentId)) break;
+    visited.add(currentId);
+
+    const currentUser = ensureUser(db, currentId);
+    const currentFamily = ensureFamilyServer(
+      currentUser,
+      guildId
+    );
+
+    if (currentFamily.parent === childId) {
+      return {
+        success: false,
+        reason: "cycle"
+      };
+    }
+
+    currentId = currentFamily.parent;
+  }
+
+  parentFamily.children.push(childId);
+  childFamily.parent = parentId;
+
+  saveDB(db);
+
+  return {
+    success: true
+  };
+}
+
+
+function removeChild(parentId, childId, guildId) {
+  const db = loadDB();
+
+  const parent = ensureUser(db, parentId);
+  const child = ensureUser(db, childId);
+
+  const parentFamily = ensureFamilyServer(parent, guildId);
+  const childFamily = ensureFamilyServer(child, guildId);
+
+  const index = parentFamily.children.indexOf(childId);
+
+  if (index === -1) {
+    return false;
+  }
+
+  parentFamily.children.splice(index, 1);
+
+  // Remove o vínculo de pai/mãe
+  if (childFamily.parent === parentId) {
+    childFamily.parent = null;
+  }
 
   saveDB(db);
 
@@ -400,7 +521,9 @@ module.exports = {
   divorce,
   getBalance,
 
+  getFamily,
   getChildren,
+  getParent,
   addChild,
   removeChild
 };

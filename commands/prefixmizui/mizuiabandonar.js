@@ -1,74 +1,87 @@
-const { EmbedBuilder } = require('discord.js');
+const { EmbedBuilder } = require("discord.js");
 const Economy = require("../../economy");
 
 module.exports = {
-    name: 'abandonar',
-    description: 'Abandona uma pessoa da sua família.',
+    name: "abandonar",
+    description: "Abandona uma ou várias pessoas.",
 
     async execute(message, args) {
-        const pessoa = message.mentions.users.first();
 
-        if (!pessoa) {
+        const pessoas = [...message.mentions.users.values()];
+
+        if (pessoas.length < 1) {
             const embed = new EmbedBuilder()
-                .setTitle('❌ Pessoa não encontrada')
+                .setColor(global.getEmbedColor(message.guild.id))
+                .setTitle("❌ Pessoa não informada")
                 .setDescription(
-                    'Mencione a pessoa que você deseja abandonar.\n\n' +
-                    '**Exemplo:** `!abandonar @Pessoa`'
-                )
-                .setColor('Red');
+                    "Mencione pelo menos uma pessoa para abandonar.\n\n" +
+                    "**Exemplo:**\n" +
+                    "`mizuiabandonar @Pessoa1 @Pessoa2`"
+                );
 
-            return message.reply({ embeds: [embed] });
+            return message.reply({
+                embeds: [embed]
+            });
         }
 
-        if (pessoa.id === message.author.id) {
-            const embed = new EmbedBuilder()
-                .setTitle('❌ Ação inválida')
-                .setDescription('Você não pode abandonar a si mesmo.')
-                .setColor('Red');
+        // Remove menções duplicadas
+        const unicas = [
+            ...new Map(
+                pessoas.map(user => [user.id, user])
+            ).values()
+        ];
 
-            return message.reply({ embeds: [embed] });
+        const abandonadas = [];
+        const inexistentes = [];
+
+        for (const pessoa of unicas) {
+
+            const resultado = Economy.removeChild(
+                message.author.id,
+                pessoa.id,
+                message.guild.id
+            );
+
+            if (resultado) {
+                abandonadas.push(pessoa);
+            } else {
+                inexistentes.push(pessoa);
+            }
         }
 
-        const familia = Family.getFamily(message.author.id);
+        let descricao = "";
 
-        if (!familia) {
-            const embed = new EmbedBuilder()
-                .setTitle('❌ Você não tem uma família')
-                .setDescription(
-                    'Você não pertence a nenhuma família atualmente.'
-                )
-                .setColor('Red');
-
-            return message.reply({ embeds: [embed] });
+        if (abandonadas.length > 0) {
+            descricao +=
+                "💔 **Pessoas abandonadas:**\n\n" +
+                abandonadas
+                    .map(user => `• ${user}`)
+                    .join("\n");
         }
 
-        if (!familia.members.includes(pessoa.id)) {
-            const embed = new EmbedBuilder()
-                .setTitle('❌ Pessoa não encontrada')
-                .setDescription(
-                    `${pessoa} não faz parte da sua família.`
-                )
-                .setColor('Red');
+        if (inexistentes.length > 0) {
 
-            return message.reply({ embeds: [embed] });
+            if (descricao) {
+                descricao += "\n\n";
+            }
+
+            descricao +=
+                "⚠️ **Não encontradas como seus filhos:**\n" +
+                inexistentes
+                    .map(user => `• ${user}`)
+                    .join("\n");
         }
-
-        Family.removeMember(message.author.id, pessoa.id);
 
         const embed = new EmbedBuilder()
-            .setTitle('🚪 Abandono')
-            .setDescription(
-                `**${message.author}** abandonou **${pessoa}** da família.\n\n` +
-                `💀 Não houve votação. A decisão foi unilateral.`
-            )
-            .setThumbnail(pessoa.displayAvatarURL({ dynamic: true }))
-            .setColor('DarkRed')
+            .setColor(global.getEmbedColor(message.guild.id))
+            .setTitle("💔 Abandono")
+            .setDescription(descricao)
             .setFooter({
                 text: `Ação realizada por ${message.author.username}`
             })
             .setTimestamp();
 
-        return message.reply({
+        await message.reply({
             embeds: [embed]
         });
     }

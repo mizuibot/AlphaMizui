@@ -1,47 +1,110 @@
-const { EmbedBuilder } = require('discord.js');
+const { EmbedBuilder } = require("discord.js");
 const Economy = require("../../economy");
 
 module.exports = {
-    name: 'adotar',
-    description: 'Adota uma ou várias pessoas.',
+    name: "adotar",
+    description: "Adota uma ou várias pessoas.",
 
     async execute(message, args) {
 
-        // Pega todas as pessoas mencionadas
         const pessoas = [...message.mentions.users.values()];
 
-        // Precisa de pelo menos 2 pessoas
-        if (pessoas.length < 2) {
+        if (pessoas.length < 1) {
             const embed = new EmbedBuilder()
-                .setTitle('❌ Pessoas insuficientes')
+                .setColor(global.getEmbedColor(message.guild.id))
+                .setTitle("❌ Pessoa não informada")
                 .setDescription(
-                    'Você precisa mencionar pelo menos **2 pessoas**.\n\n' +
-                    '**Exemplo:**\n' +
-                    '`!adotar @Pessoa1 @Pessoa2 @Pessoa3 ...`'
-                )
-                .setColor('Red');
+                    "Você precisa mencionar pelo menos **1 pessoa**.\n\n" +
+                    "**Exemplo:**\n" +
+                    "`mizuiadotar @Pessoa1 @Pessoa2 @Pessoa3`"
+                );
 
-            return message.reply({ embeds: [embed] });
+            return message.reply({
+                embeds: [embed]
+            });
         }
 
-        // Impede a mesma pessoa de aparecer mais de uma vez
-        const unicas = [...new Map(
-            pessoas.map(user => [user.id, user])
-        ).values()];
+        // Remove menções duplicadas
+        const unicas = [
+            ...new Map(
+                pessoas.map(user => [user.id, user])
+            ).values()
+        ];
 
-        // Cria a lista de pessoas
-        const lista = unicas
-            .map((user, index) => `${index + 1}. ${user}`)
-            .join('\n');
+        const adotadas = [];
+        const recusadas = [];
+
+        for (const pessoa of unicas) {
+
+            const resultado = Economy.addChild(
+                message.author.id,
+                pessoa.id,
+                message.guild.id
+            );
+
+            if (resultado.success) {
+                adotadas.push(pessoa);
+            } else {
+                recusadas.push({
+                    user: pessoa,
+                    reason: resultado.reason
+                });
+            }
+        }
+
+        let descricao = "";
+
+        if (adotadas.length > 0) {
+            descricao +=
+                "💖 **Nova família formada!**\n\n" +
+                adotadas
+                    .map((user, index) =>
+                        `${index + 1}. ${user}`
+                    )
+                    .join("\n");
+        }
+
+        if (recusadas.length > 0) {
+
+            if (descricao) {
+                descricao += "\n\n";
+            }
+
+            descricao += "⚠️ **Não foi possível adotar:**\n";
+
+            for (const item of recusadas) {
+
+                let motivo =
+                    "não foi possível realizar a adoção.";
+
+                if (item.reason === "self") {
+                    motivo = "você não pode se adotar.";
+                }
+
+                if (item.reason === "hasParent") {
+                    motivo =
+                        "essa pessoa já possui um pai/mãe adotivo neste servidor.";
+                }
+
+                if (item.reason === "alreadyChild") {
+                    motivo =
+                        "essa pessoa já é seu filho neste servidor.";
+                }
+
+                if (item.reason === "cycle") {
+                    motivo =
+                        "essa adoção criaria um ciclo na árvore genealógica.";
+                }
+
+                descricao +=
+                    `• ${item.user} — ${motivo}\n`;
+            }
+        }
 
         const embed = new EmbedBuilder()
-            .setTitle('🏠 Adoção em família!')
-            .setDescription(
-                `💖 **Uma nova família foi formada!**\n\n` +
-                `${lista}\n\n` +
-                `👨‍👩‍👧‍👦 Essas pessoas agora fazem parte da mesma família!`
-            )
-            .setColor('Random')
+            .setColor(global.getEmbedColor(message.guild.id))
+            .setTitle("🏠 Adoção em família!")
+            .setDescription(descricao)
             .setFooter({
                 text: `Adoção realizada por ${message.author.username}`
             })
