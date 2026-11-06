@@ -916,7 +916,7 @@ Trate-o com respeito, carinho e proximidade.
 const start = Date.now();
 
 const response = await generateWithRetry(ai, {
-    model: "gemini-1.5-flash-lite",
+    model: "gemini-3.5-flash-lite",
 
   contents: [
   {
