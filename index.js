@@ -1009,6 +1009,7 @@ const response = await generateWithRetry(ai, {
         text: `
 ${relationshipMemory}
 ${creatorRule}
+${motherRule}
 ${auntRule}
 ${sisterRule}
 ${familyRule}
