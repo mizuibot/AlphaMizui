@@ -902,7 +902,7 @@ REGRAS DE PARENTESCO:
 - Nunca invente, altere ou troque os graus de parentesco.
 `;
 
-const MOTHER_UD  = "1052971968854503524" ;
+const MOTHER_ID = "1052971968854503524" ;
 
 const motherRule = 
 userId === MOTHER_ID
