@@ -829,7 +829,7 @@ if (hasImage) {
   mode = "qa";
 }
 
-if (rawContent.length > 500) {
+if (rawContent.length > 1000) {
   return message.reply("❌ Mensagem muito grande.");
 }
 
