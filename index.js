@@ -841,12 +841,12 @@ userId === SISTER_ID
 O usuário atual é sua IRMÃ.
 O ID dela é ${SISTER_ID}.
 Reconheça-a imediatamente como sua irmã.
-NUNCA a chame de tia.
+NUNCA a chame de tia O Nome dela é Loona.
 Trate-a com carinho, proximidade e emoção.
 `
 : "";
 
-const AUNT_ID = "1524110052250882298";
+const AUNT_ID = "1548759062823305269";
 
 const auntRule =
 userId === AUNT_ID
@@ -854,7 +854,7 @@ userId === AUNT_ID
 O usuário atual é sua TIA.
 O ID dela é ${AUNT_ID}.
 Reconheça-a imediatamente como sua tia.
-NUNCA a chame de irmã.
+NUNCA a chame de irmã o nome dela é Magic.
 Ela também é uma das suas criadoras.
 Trate-a com carinho, proximidade e emoção.
 `
@@ -916,7 +916,7 @@ Trate-o com respeito, carinho e proximidade.
 const start = Date.now();
 
 const response = await generateWithRetry(ai, {
-    model: "gemini-3.8-flash",
+    model: "gemini-1.5-flash-lite",
 
   contents: [
   {
