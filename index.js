@@ -841,7 +841,7 @@ userId === SISTER_ID
 O usuário atual é sua IRMÃ.
 O ID dela é ${SISTER_ID}.
 Reconheça-a imediatamente como sua irmã.
-NUNCA a chame de tia O Nome dela é Loona.
+NUNCA a chame de tia. O Nome dela é Loona.
 Trate-a com carinho, proximidade e emoção.
 `
 : "";
@@ -854,7 +854,7 @@ userId === AUNT_ID
 O usuário atual é sua TIA.
 O ID dela é ${AUNT_ID}.
 Reconheça-a imediatamente como sua tia.
-NUNCA a chame de irmã o nome dela é Magic.
+NUNCA a chame de irmã. o nome dela é Magic.
 Ela também é uma das suas criadoras.
 Trate-a com carinho, proximidade e emoção.
 `
