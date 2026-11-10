@@ -1,9 +1,9 @@
+
 const fs = require("fs");
-const path = require("path");
 const sharp = require("sharp");
 const { loadDB } = require("../../economy");
 const { file } = require("../../storage");
-
+const { products, getUserItems } = require("../../utils/shop");
 
 const STATS_FILE = file("stats.json");
 const MARRIAGES_FILE = file("marriages.json");
@@ -11,6 +11,7 @@ const MARRIAGES_FILE = file("marriages.json");
 // =====================
 function loadStats() {
   if (!fs.existsSync(STATS_FILE)) return {};
+
   try {
     return JSON.parse(fs.readFileSync(STATS_FILE, "utf8"));
   } catch {
@@ -20,6 +21,7 @@ function loadStats() {
 
 function loadMarriages() {
   if (!fs.existsSync(MARRIAGES_FILE)) return {};
+
   try {
     return JSON.parse(fs.readFileSync(MARRIAGES_FILE, "utf8"));
   } catch {
@@ -29,32 +31,19 @@ function loadMarriages() {
 
 // =====================
 const ICONS = {
-  bank: "https://static.vecteezy.com/system/resources/thumbnails/060/665/567/small/charming-chibi-bank-building-digital-art-transparent-background-playful-design-whimsical-style-free-png.png",
   coins: "https://cdn-icons-png.magnific.com/256/9382/9382185.png",
   love: "https://static.vecteezy.com/system/resources/thumbnails/015/658/513/small/isometric-love-heart-icon-png.png",
   total: "https://static.vecteezy.com/system/resources/thumbnails/041/930/128/small/3d-money-bag-with-dollar-sign-and-coins-on-transparent-background-png.png"
 };
 
 async function getBuffer(url) {
-  console.log("🔗 BAIXANDO:", url);
-
   const response = await fetch(url);
 
-  console.log("📡 STATUS:", response.status);
-  console.log(
-    "📦 CONTENT-TYPE:",
-    response.headers.get("content-type")
-  );
-
   if (!response.ok) {
-    throw new Error(
-      `Falha ao baixar imagem: ${response.status}`
-    );
+    throw new Error(`Falha ao baixar imagem: ${response.status}`);
   }
 
-  return Buffer.from(
-    await response.arrayBuffer()
-  );
+  return Buffer.from(await response.arrayBuffer());
 }
 
 // =====================
@@ -103,9 +92,9 @@ module.exports = {
     const totalText = formatMoney(total);
 
     const bio =
-  (profile.bio || "Sem biografia.").length > 60
-    ? (profile.bio || "Sem biografia.").slice(0, 57) + "..."
-    : profile.bio || "Sem biografia.";
+      (profile.bio || "Sem biografia.").length > 60
+        ? (profile.bio || "Sem biografia.").slice(0, 57) + "..."
+        : profile.bio || "Sem biografia.";
 
     const background =
       profile.background ||
@@ -117,7 +106,6 @@ module.exports = {
         extension: "png",
         size: 512
       });
-
 
     // =====================
     // STATS
@@ -135,79 +123,121 @@ module.exports = {
     // CASAMENTO
     // =====================
     const marriages = loadMarriages();
-const married =
-  marriages[userId] &&
-  marriages[userId][0];
+    const married = marriages[userId] && marriages[userId][0];
 
-let marriedName = "Solteiro";
+    let marriedName = "Solteiro";
 
-if (married) {
-  try {
-    const user = await message.client.users.fetch(married);
-    marriedName = `Casado com: ${user.username}`;
-  } catch {
-    marriedName = "Casado";
-  }
-}
-   const discordDate = new Date(
-  message.author.createdTimestamp
-).toLocaleDateString("pt-BR");
+    if (married) {
+      try {
+        const user = await message.client.users.fetch(married);
+        marriedName = `Casado com: ${user.username}`;
+      } catch {
+        marriedName = "Casado";
+      }
+    }
 
-const serverDate = message.member?.joinedTimestamp
-  ? new Date(message.member.joinedTimestamp)
-      .toLocaleDateString("pt-BR")
-  : "Desconhecida";
+    const discordDate = new Date(
+      message.author.createdTimestamp
+    ).toLocaleDateString("pt-BR");
+
+    const serverDate = message.member?.joinedTimestamp
+      ? new Date(message.member.joinedTimestamp).toLocaleDateString("pt-BR")
+      : "Desconhecida";
+
+    // =====================
+    // INVENTÁRIO / ADESIVOS
+    // =====================
+    const ownedItems = getUserItems(userId);
+
+    const stickerImages = [];
+
+    for (const itemId of ownedItems) {
+      const product = products.find(p => p.id === itemId);
+
+      if (!product) continue;
+
+      try {
+        const buffer = await getBuffer(product.image);
+
+        const sticker = await sharp(buffer)
+          .resize(55, 55, {
+            fit: "contain",
+            background: { r: 0, g: 0, b: 0, alpha: 0 }
+          })
+          .png()
+          .toBuffer();
+
+        stickerImages.push(sticker.toString("base64"));
+      } catch (error) {
+        console.log(
+          `⚠️ Não foi possível carregar o adesivo: ${product.name}`
+        );
+      }
+    }
+
+    const stickerSvg = stickerImages
+      .map((base64, index) => {
+        const column = index % 4;
+        const row = Math.floor(index / 4);
+
+        const x = 550 + column * 82;
+        const y = 335 + row * 55;
+
+        return `
+          <image
+            href="data:image/png;base64,${base64}"
+            x="${x}"
+            y="${y}"
+            width="55"
+            height="55"
+            preserveAspectRatio="xMidYMid meet"
+          />
+        `;
+      })
+      .join("");
 
     // =====================
     // IMAGENS
     // =====================
-    console.log("ANTES BACKGROUND");
+    let bgBuffer;
 
-let bgBuffer;
+    try {
+      bgBuffer = await getBuffer(background);
+    } catch {
+      console.log("⚠️ Background inválido. Usando fundo padrão.");
 
-try {
-  bgBuffer = await getBuffer(background);
-} catch {
-  console.log("⚠️ Background inválido. Usando fundo padrão.");
+      bgBuffer = Buffer.from(`
+        <svg width="900" height="500" xmlns="http://www.w3.org/2000/svg">
+          <rect width="900" height="500" fill="#181818"/>
+        </svg>
+      `);
+    }
 
-  bgBuffer = Buffer.from(`
-    <svg width="900" height="500" xmlns="http://www.w3.org/2000/svg">
-      <rect width="900" height="500" fill="#181818"/>
-    </svg>
-  `);
-}
+    const bgImage = await sharp(bgBuffer)
+      .resize(900, 500)
+      .png()
+      .toBuffer();
 
-const bgImage = await sharp(bgBuffer)
-  .resize(900, 500)
-  .png()
-  .toBuffer();
+    let avatarBuffer;
 
-console.log("BACKGROUND OK");
-
-let avatarBuffer;
-
-try {
-  avatarBuffer = await sharp(await getBuffer(avatar))
-    .resize(160, 160)
-    .png()
-    .toBuffer();
-} catch {
-  console.log("⚠️ Avatar inválido. Usando avatar do Discord.");
-
-  avatarBuffer = await sharp(
-    await getBuffer(
-      message.author.displayAvatarURL({
-        extension: "png",
-        size: 512
-      })
-    )
-  )
-    .resize(160, 160)
-    .png()
-    .toBuffer();
-}
-
-console.log("AVATAR OK");
+    try {
+      avatarBuffer = await sharp(await getBuffer(avatar))
+        .resize(160, 160)
+        .png()
+        .toBuffer();
+    } catch {
+      avatarBuffer = await sharp(
+        await getBuffer(
+          message.author.displayAvatarURL({
+            extension: "png",
+            size: 512
+          })
+        )
+      )
+        .resize(160, 160)
+        .png()
+        .toBuffer();
+    }
 
     const mask = Buffer.from(`
       <svg width="160" height="160">
@@ -221,102 +251,129 @@ console.log("AVATAR OK");
       .toBuffer();
 
     // =====================
-    // ÍCONES (MAIORES)
+    // ÍCONES
     // =====================
     const coinIcon = (await getBuffer(ICONS.coins)).toString("base64");
-const bankIcon = (await getBuffer(ICONS.bank)).toString("base64");
-const loveIcon = (await getBuffer(ICONS.love)).toString("base64");
-const totalIcon = (await getBuffer(ICONS.total)).toString("base64");
+    const loveIcon = (await getBuffer(ICONS.love)).toString("base64");
+    const totalIcon = (await getBuffer(ICONS.total)).toString("base64");
+
+    // Ícone de banco local
+    const bankIcon = Buffer.from(`
+      <svg xmlns="http://www.w3.org/2000/svg" width="64" height="64">
+        <path d="M4 23 L32 7 L60 23 Z" fill="#f5c542"/>
+        <rect x="8" y="25" width="48" height="5" fill="#f5c542"/>
+        <rect x="12" y="32" width="7" height="23" fill="#f5c542"/>
+        <rect x="28" y="32" width="7" height="23" fill="#f5c542"/>
+        <rect x="45" y="32" width="7" height="23" fill="#f5c542"/>
+        <rect x="5" y="57" width="54" height="5" fill="#f5c542"/>
+      </svg>
+    `).toString("base64");
 
     // =====================
     // SVG
     // =====================
+    const esc = (v) =>
+      String(v ?? "")
+        .replace(/&/g, "&amp;")
+        .replace(/</g, "&lt;")
+        .replace(/>/g, "&gt;")
+        .replace(/\n/g, " ");
 
-const esc = (v) =>
-  String(v ?? "")
-    .replace(/&/g, "&amp;")
-    .replace(/</g, "&lt;")
-    .replace(/>/g, "&gt;")
-    .replace(/\n/g, " ");
+    const svg = `
+    <svg width="900" height="500" xmlns="http://www.w3.org/2000/svg">
 
-const svg = `
-<svg width="900" height="500" xmlns="http://www.w3.org/2000/svg">
+      <defs>
+        <style>
+          text {
+            font-family: Arial, sans-serif;
+            font-weight: 600;
+          }
+        </style>
+      </defs>
 
-<defs>
-  <style>
-    text {
-      font-family: Arial, sans-serif;
-      font-weight: 600;
-    }
-  </style>
-</defs>
+      <!-- BACKGROUND -->
+      <image
+        href="data:image/png;base64,${bgImage.toString("base64")}"
+        width="900"
+        height="500"
+      />
 
-<!-- BACKGROUND -->
-<image href="data:image/png;base64,${bgImage.toString("base64")}"
-  width="900" height="500" />
+      <!-- OVERLAY -->
+      <rect width="900" height="500" fill="rgba(0,0,0,0.55)"/>
 
-<!-- OVERLAY -->
-<rect width="900" height="500" fill="rgba(0,0,0,0.55)"/>
+      <!-- AVATAR -->
+      <image
+        href="data:image/png;base64,${roundedAvatar.toString("base64")}"
+        x="40"
+        y="160"
+        width="160"
+        height="160"
+      />
 
-<!-- AVATAR -->
-<image href="data:image/png;base64,${roundedAvatar.toString("base64")}"
-  x="40" y="160" width="160" height="160"/>
+      <!-- COINS -->
+      <image href="data:image/png;base64,${coinIcon}"
+        x="320" y="95" width="34" height="34"/>
 
-<!-- COINS (SUBIU) -->
-<image href="data:image/png;base64,${coinIcon}"
-  x="320" y="95" width="34" height="34"/>
-<text x="360" y="120" fill="white" font-size="26">
-Coins: ${esc(walletText)}
-</text>
+      <text x="360" y="120" fill="white" font-size="26">
+        Coins: ${esc(walletText)}
+      </text>
 
-<!-- BANK (SUBIU) -->
-<image href="data:image/png;base64,${bankIcon}"
-  x="320" y="150" width="34" height="34"/>
-<text x="360" y="175" fill="white" font-size="26">
-Bank: ${esc(bankText)}
-</text>
+      <!-- BANK -->
+      <image href="data:image/png;base64,${bankIcon}"
+        x="320" y="150" width="34" height="34"/>
 
-<!-- TOTAL (ligeiramente ajustado pra não colar) -->
-<image href="data:image/png;base64,${totalIcon}"
-  x="320" y="205" width="34" height="34"/>
-<text x="360" y="230" fill="white" font-size="26">
-Total: ${esc(totalText)}
-</text>
+      <text x="360" y="175" fill="white" font-size="26">
+        Bank: ${esc(bankText)}
+      </text>
 
-<!-- STATS (SUBIU) -->
-<text x="320" y="290" fill="white" font-size="22">
-Hoje: ${today} | Semana: ${week}
-</text>
+      <!-- TOTAL -->
+      <image href="data:image/png;base64,${totalIcon}"
+        x="320" y="205" width="34" height="34"/>
 
-<text x="320" y="320" fill="white" font-size="22">
-Mês: ${month} | Ano: ${year}
-</text>
+      <text x="360" y="230" fill="white" font-size="26">
+        Total: ${esc(totalText)}
+      </text>
 
-<!-- BIO -->
-<text x="40" y="360" fill="white" font-size="18">
-Bio: ${esc(bio)}
-</text>
+      <!-- STATS -->
+      <text x="320" y="290" fill="white" font-size="22">
+        Hoje: ${today} | Semana: ${week}
+      </text>
 
-<!-- DATES -->
-<text x="40" y="390" fill="white" font-size="16">
-Discord: ${discordDate}
-</text>
+      <text x="320" y="320" fill="white" font-size="22">
+        Mês: ${month} | Ano: ${year}
+      </text>
 
-<text x="40" y="415" fill="white" font-size="16">
-Servidor: ${serverDate}
-</text>
+      <!-- BIO -->
+      <text x="40" y="360" fill="white" font-size="18">
+        Bio: ${esc(bio)}
+      </text>
 
-<!-- CASAMENTO -->
-<image href="data:image/png;base64,${loveIcon}"
-  x="40" y="440" width="28" height="28"/>
+      <!-- DATES -->
+      <text x="40" y="390" fill="white" font-size="16">
+        Discord: ${discordDate}
+      </text>
 
-<text x="75" y="460" fill="white" font-size="18">
-${esc(marriedName)}
-</text>
+      <text x="40" y="415" fill="white" font-size="16">
+        Servidor: ${serverDate}
+      </text>
 
-</svg>
-`; 
+      <!-- CASAMENTO -->
+      <image href="data:image/png;base64,${loveIcon}"
+        x="40" y="440" width="28" height="28"/>
 
+      <text x="75" y="460" fill="white" font-size="18">
+        ${esc(marriedName)}
+      </text>
+
+      <!-- COLEÇÃO -->
+      <text x="550" y="320" fill="white" font-size="17">
+        Coleção: ${stickerImages.length}/12
+      </text>
+
+      ${stickerSvg}
+
+    </svg>
+    `;
 
     const image = await sharp(Buffer.from(svg))
       .png()
@@ -327,3 +384,4 @@ ${esc(marriedName)}
     });
   }
 };
+
