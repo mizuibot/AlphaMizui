@@ -128,30 +128,6 @@ module.exports = {
     }
 
     // =====================
-    // USUÁRIO JÁ CASADO
-    // =====================
-
-    if (userPartners.length > 0) {
-      return interaction.reply({
-        content:
-          "❌ Você já está casado com outra pessoa.",
-        ephemeral: true
-      });
-    }
-
-    // =====================
-    // ALVO JÁ CASADO
-    // =====================
-
-    if (targetPartners.length > 0) {
-      return interaction.reply({
-        content:
-          `❌ ${target} já está casado com outra pessoa.`,
-        ephemeral: true
-      });
-    }
-
-    // =====================
     // IDs DOS BOTÕES
     // =====================
 
