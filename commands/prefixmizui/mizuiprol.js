@@ -401,7 +401,7 @@ if (spouseAvatarUrl) {
       </text>
 
       <!-- BANK -->
-      <image href="data:image/png;base64,${bankIcon}"
+      href="data:image/svg+xml;base64,${bankIcon}"
         x="320" y="150" width="34" height="34"/>
 
       <text x="360" y="175" fill="white" font-size="26">
