@@ -336,7 +336,6 @@ if (spouseAvatarUrl) {
     // ÍCONES
     // =====================
     const coinIcon = (await getBuffer(ICONS.coins)).toString("base64");
-    const bankIcon = (await getBuffer(ICONS.bank)).toString("base64");
     const loveIcon = (await getBuffer(ICONS.love)).toString("base64");
     const totalIcon = (await getBuffer(ICONS.total)).toString("base64");
 
