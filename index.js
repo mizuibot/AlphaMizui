@@ -619,8 +619,8 @@ if (content.toLowerCase().startsWith("mizui")) {
         const sec = Math.floor((remaining % 60000) / 1000);
 
         return message.reply(
-            `⛓️ Você está preso!\n⏳ Tempo restante: **${min}m ${sec}s**\n💸 Fiança: **${jailed.fine.toLocaleString("pt-BR")} mzcoins>
-        );
+    `⛓️ Você está preso!\n⏳ Tempo restante: **${min}m ${sec}s**\n💸 Fiança: **${jailed.fine.toLocaleString("pt-BR")} mzcoins**`
+);
     }
 
     if (jailed && jailed.until <= Date.now()) {
