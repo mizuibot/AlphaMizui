@@ -8,7 +8,7 @@ const { products, getUserItems } = require("../../utils/shop");
 const STATS_FILE = file("stats.json");
 const MARRIAGES_FILE = file("marriages.json");
 const MARRIAGE_DISPLAY_FILE = file("marriageDisplay.json");
-const MARRIAGE_LOVE_FILE = file("marriagesLove.json");
+const MARRIAGE_LOVE_FILE = file("marriageLove.json");
 
 // =====================
 function loadStats() {
