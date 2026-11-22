@@ -164,7 +164,7 @@ const spouses = marriageLove[userId] || [];
 
 const married = spouses.includes(marriageDisplay[userId])
   ? marriageDisplay[userId]
-  : null;
+  : spouses[0] || null;
 
 let marriedName = "Solteiro";
 let spouseAvatarUrl = null;
