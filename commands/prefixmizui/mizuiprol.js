@@ -8,7 +8,7 @@ const { products, getUserItems } = require("../../utils/shop");
 const STATS_FILE = file("stats.json");
 const MARRIAGES_FILE = file("marriages.json");
 const MARRIAGE_DISPLAY_FILE = file("marriageDisplay.json");
-const MARRIAGE_LOVE_FILE = file("marriageLove.json");
+const MARRIAGE_LOVE_FILE = file("marriagesLove.json");
 
 // =====================
 function loadStats() {
@@ -401,12 +401,17 @@ if (spouseAvatarUrl) {
       </text>
 
       <!-- BANK -->
-      href="data:image/svg+xml;base64,${bankIcon}"
-        x="320" y="150" width="34" height="34"/>
+<image
+  href="data:image/svg+xml;base64,${bankIcon}"
+  x="320"
+  y="150"
+  width="34"
+  height="34"
+/>
 
-      <text x="360" y="175" fill="white" font-size="26">
-        Bank: ${esc(bankText)}
-      </text>
+<text x="360" y="175" fill="white" font-size="26">
+  Bank: ${esc(bankText)}
+</text>
 
       <!-- TOTAL -->
       <image href="data:image/png;base64,${totalIcon}"
