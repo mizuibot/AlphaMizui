@@ -7,6 +7,8 @@ const { products, getUserItems } = require("../../utils/shop");
 
 const STATS_FILE = file("stats.json");
 const MARRIAGES_FILE = file("marriages.json");
+const MARRIAGE_DISPLAY_FILE = file("marriageDisplay.json");
+const MARRIAGE_LOVE_FILE = file("marriageLove.json");
 
 // =====================
 function loadStats() {
@@ -29,9 +31,40 @@ function loadMarriages() {
   }
 }
 
+
+function loadMarriageDisplay() {
+  if (!fs.existsSync(MARRIAGE_DISPLAY_FILE)) return {};
+
+  try {
+    return JSON.parse(fs.readFileSync(MARRIAGE_DISPLAY_FILE, "utf8"));
+  } catch {
+    return {};
+  }
+}
+
+function saveMarriageDisplay(data) {
+  fs.writeFileSync(
+    MARRIAGE_DISPLAY_FILE,
+    JSON.stringify(data, null, 2)
+  );
+}
+
+function loadMarriageLove() {
+  if (!fs.existsSync(MARRIAGE_LOVE_FILE)) return {};
+
+  try {
+    return JSON.parse(
+      fs.readFileSync(MARRIAGE_LOVE_FILE, "utf8")
+    );
+  } catch {
+    return {};
+  }
+}
+
 // =====================
 const ICONS = {
   coins: "https://cdn-icons-png.magnific.com/256/9382/9382185.png",
+  bank: "https://cdn-icons-png.flaticon.com/512/1799/1799926.png",
   love: "https://static.vecteezy.com/system/resources/thumbnails/015/658/513/small/isometric-love-heart-icon-png.png",
   total: "https://static.vecteezy.com/system/resources/thumbnails/041/930/128/small/3d-money-bag-with-dollar-sign-and-coins-on-transparent-background-png.png"
 };
@@ -122,27 +155,48 @@ module.exports = {
     // =====================
     // CASAMENTO
     // =====================
-    const marriages = loadMarriages();
-    const married = marriages[userId] && marriages[userId][0];
+const marriages = loadMarriages();
 
-    let marriedName = "Solteiro";
+const marriageLove = loadMarriageLove();
+const marriageDisplay = loadMarriageDisplay();
 
-    if (married) {
-      try {
-        const user = await message.client.users.fetch(married);
-        marriedName = `Casado com: ${user.username}`;
-      } catch {
-        marriedName = "Casado";
-      }
-    }
+const spouses = marriageLove[userId] || [];
 
-    const discordDate = new Date(
-      message.author.createdTimestamp
-    ).toLocaleDateString("pt-BR");
+const married = spouses.includes(marriageDisplay[userId])
+  ? marriageDisplay[userId]
+  : null;
 
-    const serverDate = message.member?.joinedTimestamp
-      ? new Date(message.member.joinedTimestamp).toLocaleDateString("pt-BR")
-      : "Desconhecida";
+let marriedName = "Solteiro";
+let spouseAvatarUrl = null;
+
+if (spouses.length > 0 && !married) {
+  marriedName = "Escolha seu cônjuge";
+}
+
+if (married) {
+  try {
+    const spouse = await message.client.users.fetch(married);
+
+    marriedName = `Casado com: ${spouse.username}`;
+
+    spouseAvatarUrl = spouse.displayAvatarURL({
+      extension: "png",
+      size: 256
+    });
+
+  } catch {
+    marriedName = "Cônjuge indisponível";
+  }
+}
+
+const discordDate = new Date(
+  message.author.createdTimestamp
+).toLocaleDateString("pt-BR");
+
+const serverDate = message.member?.joinedTimestamp
+  ? new Date(message.member.joinedTimestamp).toLocaleDateString("pt-BR")
+  : "Desconhecida";
+
 
     // =====================
     // INVENTÁRIO / ADESIVOS
@@ -250,10 +304,39 @@ module.exports = {
       .png()
       .toBuffer();
 
+let roundedSpouseAvatar = null;
+
+if (spouseAvatarUrl) {
+  try {
+    const spouseAvatarBuffer = await sharp(
+      await getBuffer(spouseAvatarUrl)
+    )
+      .resize(80, 80)
+      .png()
+      .toBuffer();
+
+    const spouseMask = Buffer.from(`
+      <svg width="80" height="80">
+        <circle cx="40" cy="40" r="40" fill="white"/>
+      </svg>
+    `);
+
+    roundedSpouseAvatar = await sharp(spouseAvatarBuffer)
+      .composite([
+        { input: spouseMask, blend: "dest-in" }
+      ])
+      .png()
+      .toBuffer();
+
+  } catch (error) {
+    console.log("⚠️ Não foi possível carregar o avatar do cônjuge.");
+  }
+}
     // =====================
     // ÍCONES
     // =====================
     const coinIcon = (await getBuffer(ICONS.coins)).toString("base64");
+    const bankIcon = (await getBuffer(ICONS.bank)).toString("base64");
     const loveIcon = (await getBuffer(ICONS.love)).toString("base64");
     const totalIcon = (await getBuffer(ICONS.total)).toString("base64");
 
@@ -357,13 +440,23 @@ module.exports = {
         Servidor: ${serverDate}
       </text>
 
-      <!-- CASAMENTO -->
-      <image href="data:image/png;base64,${loveIcon}"
-        x="40" y="440" width="28" height="28"/>
+<!-- CASAMENTO -->
+<image href="data:image/png;base64,${loveIcon}"
+  x="40" y="440" width="28" height="28"/>
 
-      <text x="75" y="460" fill="white" font-size="18">
-        ${esc(marriedName)}
-      </text>
+${roundedSpouseAvatar ? `
+  <image
+    href="data:image/png;base64,${roundedSpouseAvatar.toString("base64")}"
+    x="75"
+    y="420"
+    width="40"
+    height="40"
+  />
+` : ""}
+
+<text x="${roundedSpouseAvatar ? 125 : 75}" y="460" fill="white" font-size="18">
+  ${esc(marriedName)}
+</text>
 
       <!-- COLEÇÃO -->
       <text x="550" y="320" fill="white" font-size="17">

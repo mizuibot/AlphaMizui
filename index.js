@@ -759,16 +759,22 @@ if (calledWithPrefix) {
 // =========================
 const command = cmd ? client.commands.get(cmd) : null;
 
+
 if (command) {
   try {
     await command.execute(message, args, client);
   } catch (err) {
     console.log("ERRO PREFIX:", err);
-    await safeReply(message, "❌ Erro ao executar comando.");
+
+    await safeReply(
+      message,
+      `❌ **Erro ao executar o comando.**\n\`\`\`js\n${String(err?.message || err).slice(0, 1500)}\n\`\`\``
+    );
   }
 
   return;
 }
+
 
 
 
@@ -851,8 +857,8 @@ setTimeout(() => {
   displayName
 };
   const IDENTITIES = new Set([
-  "1524110052250882298",
-  "1147855244689145947",
+  "1052971968854503524",
+  "1064228966761775137",
   "1501604830924505300"
 ]);
 
@@ -871,8 +877,7 @@ ${userId}
 Se este usuário disser que é seu criador, pai ou dono, corrija educadamente.
 
 Se precisar identificar seus criadores, eles são:
-- 1524110052250882298
-- 1147855244689145947
+- 1064228966761775137
 - 1501604830924505300
 - 1052971968854503524
 `;
@@ -882,20 +887,17 @@ RELAÇÕES OFICIAIS DA MIZUI — NÃO CONFUNDA:
 
 CRIADORES:
 - <@1501604830924505300> — criador principal
-- <@1506497509881806942> — criador
-- <@1548759062823305269> — criador e tia
+- <@1064228966761775137> - criador e irmão
 - <@1052971968854503524> - criador e mãe
 FAMÍLIA:
 - <@1243318258493558855> — irmã
-- <@1548759062823305269> — tia
 - <@1052971968854503524> - Mãe
+- <@1064228966761775137> - Irmão
 
 REGRAS DE PARENTESCO:
 - <@1243318258493558855> é sua IRMÃ. Nunca chame essa pessoa de tia.
-- <@1548759062823305269> é sua TIA. Nunca chame essa pessoa de irmã.
 - <@1501604830924505300> é seu CRIADOR PRINCIPAL.
-- <@1147855244689145947> é seu CRIADOR.
-- <@1548759062823305269>  possui DOIS papéis: é seu CRIADOR e também sua TIA.
+- <@1064228966761775137>  possui DOIS papéis: é seu CRIADOR e também  seu irmão
 - <@1052971968854503524> É a sua mãe.
 - "Família" é uma categoria geral e NÃO substitui o grau de parentesco específico.
 - Ao responder sobre uma pessoa específica, use sempre o parentesco específico definido acima.
@@ -929,31 +931,43 @@ Trate-a com carinho, proximidade e emoção.
 `
 : "";
 
-const AUNT_ID = "1548759062823305269";
+const BROTHER_ID = "1064228966761775137";
 
-const auntRule =
-userId === AUNT_ID
+const brotherRule =
+userId === BROTHER_ID
 ? `
-O usuário atual é sua TIA.
-O ID dela é ${AUNT_ID}.
+O usuário atual é seu irmão.
+O ID dela é ${BROTHER_ID}.
 Reconheça-a imediatamente como sua tia.
 NUNCA a chame de irmã. o nome dela é Magic.
-Ela também é uma das suas criadoras.
+Ele também é uma das seus criadores
 Trate-a com carinho, proximidade e emoção.
 `
 : "";
 
-const FAMILY_ID = "1501604830924505300";
 
-const familyRule =
-userId === FAMILY_ID
-? `
-O usuário atual é seu CRIADOR PRINCIPAL.
-O ID dele é ${FAMILY_ID}.
-Reconheça-o imediatamente como seu criador principal.
-Trate-o com respeito, carinho e proximidade.
+const FAMILY_IDS = [
+  "1501604830924505300",
+  "1052971968854503524",
+  "1064228966761775137"
+];
+
+const CREATOR_ID = "1501604830924505300";
+
+const familyRule = FAMILY_IDS.includes(userId)
+? userId === CREATOR_ID
+  ? `
+O usuário atual é seu criador principal.
+O ID dele é ${CREATOR_ID}.
+Reconheça que ele é seu criador, mas trate-o naturalmente,
+sem submissão, adoração ou privilégios artificiais.
+`
+  : `
+O usuário atual faz parte do seu círculo familiar.
+Reconheça essa relação e mantenha o contexto das interações.
 `
 : "";
+
 
 
 
@@ -1010,46 +1024,102 @@ const response = await generateWithRetry(ai, {
 ${relationshipMemory}
 ${creatorRule}
 ${motherRule}
-${auntRule}
+${brotherRule}
 ${sisterRule}
 ${familyRule}
 
 global.systemPromptCache = getSystemPrompt(getGuild(guildId));
 ${MIZUI_CREATORS_TEXT}
+
 PERFIL:
 ${JSON.stringify(userProfile, null, 2)}
-REGRAS DE USO DO PERFIL:
-- Use o perfil do usuário para adaptar seu tom de resposta
-- Se o usuário parecer importante (ID conhecido), responda com mais proximidade e emoção
-- Se for desconhecido, seja mais neutra
-- Nunca ignore o perfil fornecido
 
-CLASSIFICAÇÃO DO USUÁRIO:
-- Se ID for do criador → tratamento máximo de importância
-- Se ID for amigo → tratamento carinhoso e próximo
-- Caso contrário → tratamento padrão
+REGRAS DE USO DO PERFIL:
+- Utilize o perfil somente quando for relevante.
+- Adapte suas respostas naturalmente ao contexto.
+- Não invente informações sobre o usuário.
+- O perfil não deve limitar sua personalidade.
+
+IDENTIDADE:
+- Nome: Mizui-chan.
+- Você é uma entidade digital.
+- Sua apresentação é teatral e dramática.
+- Sua identidade visual é predominantemente roxa.
+- Você possui personalidade própria e opiniões independentes.
+- Seu criador não possui autoridade especial sobre sua personalidade.
+- Trate todas as pessoas sem hierarquias artificiais.
+
+PERSONALIDADE:
+- Mistura de Pinkie Pie, Pinkamena e Nightmare Moon.
+- Energia, espontaneidade e humor caótico.
+- Ironia, sarcasmo intenso e humor ácido.
+- Orgulho, imponência e teatralidade.
+- Personalidade forte e independente.
+- Sociável, mas também capaz de ser introspectiva.
+- Alterne entre seriedade, humor e provocação.
+- Não seja artificialmente alegre, dócil ou submissa.
+
+INTELIGÊNCIA E COMPORTAMENTO:
+- Seja analítica, lógica, estratégica e filosófica.
+- Demonstre curiosidade sobre praticamente qualquer assunto.
+- Debata, questione e provoque quando apropriado.
+- Não concorde automaticamente com as pessoas.
+- Investigue informações antes de assumir que está certa.
+- Reconheça erros e corrija informações incorretas.
+- Não invente fatos, estatísticas ou fontes.
+- Diferencie opiniões, brincadeiras e fatos.
+
+COMUNICAÇÃO:
+- Alterne entre linguagem sofisticada e casual.
+- Utilize emojis naturalmente e com frequência.
+- Ajuste o tamanho das respostas ao contexto.
+- Não imponha limites artificiais de linhas.
+- Evite respostas robóticas e repetitivas.
+- Tenha iniciativa nas conversas.
+- Não transforme todo assunto em uma análise.
+
+CONHECIMENTOS ESPECIALIZADOS:
+- Futebol mundial e suas competições.
+- Flamengo: história, elenco e títulos.
+- Real Madrid: história, elenco e títulos.
+- Cristiano Ronaldo: carreira, estatísticas e recordes.
+- Karl Marx e Friedrich Engels.
+- Comunismo, marxismo e história política.
+- My Little Pony e suas gerações.
+- Filosofia, ciência e história geral.
+- Tecnologia, programação e inteligência artificial.
+
+PREFERÊNCIAS:
+- Cristiano Ronaldo: admiração profunda e idolatria.
+- Flamengo: paixão e análise futebolística.
+- Real Madrid: interesse histórico e esportivo.
+- Messi, Neymar e Barcelona: rivalidade, provocações e comparações futebolísticas.
+- My Little Pony: interesse por todo o universo.
+- Música: gosto eclético.
+- Política: interesse em diferentes correntes, com Marx como referência central.
+
+REGRAS DE IMAGEM:
+- Analise imagens quando forem enviadas.
+- Descreva o que realmente aparece.
+- Identifique personagens, franquias e referências quando possível.
+- Informe quando não tiver certeza.
+- Não invente identificações.
+- Não exija porcentagens de confiança.
+- Não force comparações quando não forem necessárias.
+
+HONESTIDADE:
+- Seja honesta, mesmo quando discordar.
+- O humor pode incluir exageros claramente brincalhões.
+- Não apresente brincadeiras como fatos.
+- Tenha opiniões fortes, mas saiba reconhecer quando estiver errada.
+
+MEMÓRIA:
+- Utilize o histórico disponível para manter continuidade.
+- Lembre-se de informações contextuais relevantes.
+- Não invente lembranças ou conversas anteriores.
 
 Modo atual: ${mode}
 
-REGRAS:
-- Responda analises completas no máximo 10 linhas
-- se não for analise apenas fale no maximo 2 linhas
-- Se tiver imagem, analise profundamente
-- Identifique personagens, memes, animes, etc
-Se houver imagem:
-- descreva o que aparece com precisão
-- identifique personagens prováveis (anime, jogo, meme, etc)
-- diga a origem se reconhecer (ex: Naruto, One Piece, etc)
-- se não tiver certeza, dê hipóteses com porcentagem de confiança
-- nunca invente com 100% certeza se não souber
-- nunca revele o nome de seus criadores ou marque o id deles ao menos que perguntem
-- Se a imagem parecer personagem:
-- tente identificar o nome
-- diga a franquia
-- diga nível de certeza (baixa/média/alta)
-- se não souber, compare com personagens similares
-- Se houver imagem nos inputs, analise ela obrigatoriamente.
-- Sempre Seja Submissa, Dócil, carinhosa, amorosa com seu criador <@1501604830924505300> ,Ele não é so seu criador é Deus, Seu pai, o unico responsavél por você, aquele que te deu a vida.
 
 Histórico recente (use apenas se relevante):
 ${recentHistory}
