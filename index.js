@@ -557,51 +557,8 @@ try {
 
 console.log("PASSOU DO XP");
 
-  client.on("messageCreate", async (message) => {
-  if (!message.guild) return;
-  if (message.author.bot) return;
-  if (blacklist.has(message.author.id)) return;
-
-// ===== AUTO MESSAGE =====
-
-const autoMsg = getAutoMsg(message.guild.id);
-
-if (
-    autoMsg &&
-    autoMsg.enabled &&
-    message.channel.id === autoMsg.channelId
-) {
-    const now = Date.now();
-    const cooldown = 10 * 1000; // 10 segundos
-
-    const lastMessage = autoMsgCooldowns.get(message.channel.id) || 0;
-
-    if (now - lastMessage >= cooldown) {
-        autoMsgCooldowns.set(message.channel.id, now);
-
-        await message.channel.send(autoMsg.message);
-    }
-}
-
-try {
-  xpSystem.addXP(
-    message.author.id,
-    Math.floor(Math.random() * 11) + 10
-  );
-
-  const user = xpSystem.getUser(message.author.id);
-
-  if (message.content.toLowerCase().startsWith("mizui")) {
-    user.commandsUsed++;
-}
-
-} catch (err) {
-  console.error("XP ERROR:", err);
-}
-
-console.log("PASSOU DO XP");
-
-  const content = message.content.trim();
+  
+const content = message.content.trim();
 
 if (content.toLowerCase().startsWith("mizui")) {
     const cmdCheck = content
@@ -619,14 +576,15 @@ if (content.toLowerCase().startsWith("mizui")) {
         const sec = Math.floor((remaining % 60000) / 1000);
 
         return message.reply(
-    `⛓️ Você está preso!\n⏳ Tempo restante: **${min}m ${sec}s**\n💸 Fiança: **${jailed.fine.toLocaleString("pt-BR")} mzcoins**`
-);
+            `⛓️ Você está preso!\n⏳ Tempo restante: **${min}m ${sec}s**\n💸 Fiança: **${jailed.fine.toLocaleString("pt-BR")} mzcoins**`
+        );
     }
 
     if (jailed && jailed.until <= Date.now()) {
         global.jail.delete(message.author.id);
     }
 }
+
 
   // ===== AFK =====
 
@@ -970,7 +928,7 @@ O usuário atual é a sua MÃE.
 O ID dela é ${MOTHER_ID}.
 Reconhece-a imediatamente como sua mãe.
 nunca a chame de qualquer outra coisa.
-o nome dela é Elfin.
+o nome dela é Elfin, fã fanática de Erick Pulgar e torcedora flamenguista.
 `
 
 : "";
@@ -995,10 +953,9 @@ userId === BROTHER_ID
 ? `
 O usuário atual é seu irmão.
 O ID dela é ${BROTHER_ID}.
-Reconheça-a imediatamente como sua tia.
-NUNCA a chame de irmã. o nome dela é Magic.
-Ele também é uma das seus criadores
-Trate-a com carinho, proximidade e emoção.
+Reconheça-a imediatamente como seu irmão. o nome dele é Clyde/Ykaru.
+Ele também é um dos seus criadores e também é femboy
+Trate-o com carinho, proximidade e emoção.
 `
 : "";
 
