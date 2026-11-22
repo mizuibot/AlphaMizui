@@ -557,20 +557,77 @@ try {
 
 console.log("PASSOU DO XP");
 
-  const jailedUntil = global.jail.get(message.author.id);
+  client.on("messageCreate", async (message) => {
+  if (!message.guild) return;
+  if (message.author.bot) return;
+  if (blacklist.has(message.author.id)) return;
 
-if (jailedUntil && jailedUntil > Date.now()) {
+// ===== AUTO MESSAGE =====
 
-  const remaining = jailedUntil - Date.now();
+const autoMsg = getAutoMsg(message.guild.id);
 
-  const min = Math.floor(remaining / 60000);
-  const sec = Math.floor((remaining % 60000) / 1000);
+if (
+    autoMsg &&
+    autoMsg.enabled &&
+    message.channel.id === autoMsg.channelId
+) {
+    const now = Date.now();
+    const cooldown = 10 * 1000; // 10 segundos
 
-  return message.reply(
-    `⛓️ Você está preso!\n⏳ Tempo restante: **${min}m ${sec}s**\n💸 Fiança: **345.000 mzcoins**`
-  );
+    const lastMessage = autoMsgCooldowns.get(message.channel.id) || 0;
+
+    if (now - lastMessage >= cooldown) {
+        autoMsgCooldowns.set(message.channel.id, now);
+
+        await message.channel.send(autoMsg.message);
+    }
 }
- 
+
+try {
+  xpSystem.addXP(
+    message.author.id,
+    Math.floor(Math.random() * 11) + 10
+  );
+
+  const user = xpSystem.getUser(message.author.id);
+
+  if (message.content.toLowerCase().startsWith("mizui")) {
+    user.commandsUsed++;
+}
+
+} catch (err) {
+  console.error("XP ERROR:", err);
+}
+
+console.log("PASSOU DO XP");
+
+  const content = message.content.trim();
+
+if (content.toLowerCase().startsWith("mizui")) {
+    const cmdCheck = content
+        .slice("mizui".length)
+        .trim()
+        .split(/\s+/)[0]
+        ?.toLowerCase();
+
+    const jailed = global.jail?.get(message.author.id);
+
+    if (jailed && jailed.until > Date.now() && cmdCheck !== "fianca") {
+        const remaining = jailed.until - Date.now();
+
+        const min = Math.floor(remaining / 60000);
+        const sec = Math.floor((remaining % 60000) / 1000);
+
+        return message.reply(
+            `⛓️ Você está preso!\n⏳ Tempo restante: **${min}m ${sec}s**\n💸 Fiança: **${jailed.fine.toLocaleString("pt-BR")} mzcoins>
+        );
+    }
+
+    if (jailed && jailed.until <= Date.now()) {
+        global.jail.delete(message.author.id);
+    }
+}
+
   // ===== AFK =====
 
     const AFK_FILE = file("afk.json");
